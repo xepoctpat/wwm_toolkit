@@ -1,0 +1,81 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Frontend: Build foundation",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "build"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: Test foundation",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "test"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: Lint foundation",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "lint"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Python: Build data manifest",
+      "type": "shell",
+      "command": "${workspaceFolder}\\wwm_toolkit_env\\Scripts\\python.exe",
+      "args": [
+        "${workspaceFolder}\\scripts_py\\build_data_pack.py"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Python: Validate published manifest",
+      "type": "shell",
+      "command": "${workspaceFolder}\\wwm_toolkit_env\\Scripts\\python.exe",
+      "args": [
+        "${workspaceFolder}\\scripts_py\\validate_sources.py"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Python: Open local shell",
+      "type": "shell",
+      "command": "pwsh.exe",
+      "args": [
+        "-NoExit",
+        "-File",
+        "${workspaceFolder}\\scripts_py\\activate_wwm_toolkit_env.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Validate: Phase 1 foundation",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Frontend: Build foundation",
+        "Frontend: Test foundation",
+        "Frontend: Lint foundation",
+        "Python: Build data manifest",
+        "Python: Validate published manifest"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

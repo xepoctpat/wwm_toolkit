@@ -1,0 +1,22 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/wwm_toolkit_env/Scripts/python.exe",
+  "python.venvFolders": [
+    "${workspaceFolder}"
+  ],
+  "python.terminal.activateEnvironment": true,
+  "terminal.integrated.env.windows": {
+    "VIRTUAL_ENV": "${workspaceFolder}\\wwm_toolkit_env",
+    "Path": "${workspaceFolder}\\wwm_toolkit_env\\Scripts;${env:Path}"
+  },
+  "terminal.integrated.profiles.windows": {
+    "WWM Toolkit (local env)": {
+      "path": "pwsh.exe",
+      "args": [
+        "-NoExit",
+        "-File",
+        "${workspaceFolder}/scripts_py/activate_wwm_toolkit_env.ps1"
+      ]
+    }
+  },
+  "terminal.integrated.defaultProfile.windows": "WWM Toolkit (local env)"
+}

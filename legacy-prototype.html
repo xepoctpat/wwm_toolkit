@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A polished Where Winds Meet NPC toolkit with a dedicated archetype lab, searchable NPC atlas, source-backed map overlay, and research notes." />
+    <title>WWM Toolkit — NPC Atlas, Map Overlay & Archetype Lab</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="brand-block">
+                <div class="brand-mark" aria-hidden="true">🌬️</div>
+                <div>
+                    <p class="eyebrow">Where Winds Meet Toolkit</p>
+                    <h1>NPC Atlas, Map Overlay & Archetype Lab</h1>
+                </div>
+            </div>
+
+            <nav class="primary-nav" aria-label="Primary views">
+                <button id="nav-dashboard" class="nav-button active" type="button" data-view="dashboard">Overview</button>
+                <button id="nav-atlas" class="nav-button" type="button" data-view="atlas">NPC Atlas</button>
+                <button id="nav-map" class="nav-button" type="button" data-view="map">Map Overlay</button>
+                <button id="nav-archetypes" class="nav-button" type="button" data-view="archetypes">Archetype Lab</button>
+                <button id="nav-sources" class="nav-button" type="button" data-view="sources">Research Notes</button>
+            </nav>
+
+            <div class="topbar-actions">
+                <button class="ghost-button" type="button" data-action="focus-atlas">/ Search NPCs</button>
+            </div>
+        </header>
+
+        <main class="layout">
+            <aside class="side-rail" aria-label="Toolkit side rail">
+                <section id="session-summary" class="rail-card"></section>
+                <section id="favorite-npcs-panel" class="rail-card"></section>
+                <section id="source-callout" class="rail-card"></section>
+            </aside>
+
+            <section class="workspace">
+                <section id="dashboard-view" class="view active" aria-labelledby="nav-dashboard">
+                    <div id="dashboard-content"></div>
+                </section>
+
+                <section id="atlas-view" class="view" aria-labelledby="nav-atlas" hidden>
+                    <div id="atlas-content"></div>
+                </section>
+
+                <section id="map-view" class="view" aria-labelledby="nav-map" hidden>
+                    <div id="map-content"></div>
+                </section>
+
+                <section id="archetypes-view" class="view" aria-labelledby="nav-archetypes" hidden>
+                    <div id="archetypes-content"></div>
+                </section>
+
+                <section id="sources-view" class="view" aria-labelledby="nav-sources" hidden>
+                    <div id="sources-content"></div>
+                </section>
+
+                <footer class="page-footer">
+                    <p>Fan-made toolkit built from official product copy plus community routing notes. Map pins are approximate and intentionally avoid reusing third-party in-game map assets.</p>
+                </footer>
+            </section>
+        </main>
+    </div>
+
+    <script src="assets/js/data/archetypes.js"></script>
+    <script src="assets/js/data/npcs.js"></script>
+    <script src="assets/js/data/sources.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

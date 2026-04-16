@@ -1,0 +1,59 @@
+{
+  "generatedAt": "manual-run",
+  "domains": [
+    {
+      "domain": "quests",
+      "rawPath": "content/raw/quests",
+      "publishedPath": "content/published/quests.json",
+      "status": "pending-verification"
+    },
+    {
+      "domain": "storylines",
+      "rawPath": "content/raw/storylines",
+      "publishedPath": "content/published/storylines.json",
+      "status": "pending-verification"
+    },
+    {
+      "domain": "npcs",
+      "rawPath": "content/raw/npcs",
+      "publishedPath": "content/published/npcs.json",
+      "status": "pending-verification"
+    },
+    {
+      "domain": "regions",
+      "rawPath": "content/raw/regions",
+      "publishedPath": "content/published/regions.json",
+      "status": "pending-verification"
+    },
+    {
+      "domain": "factions",
+      "rawPath": "content/raw/factions",
+      "publishedPath": "content/published/factions.json",
+      "status": "pending-verification"
+    },
+    {
+      "domain": "items",
+      "rawPath": "content/raw/items",
+      "publishedPath": "content/published/items.json",
+      "status": "pending-verification"
+    },
+    {
+      "domain": "skills",
+      "rawPath": "content/raw/skills",
+      "publishedPath": "content/published/skills.json",
+      "status": "pending-verification"
+    },
+    {
+      "domain": "bosses",
+      "rawPath": "content/raw/bosses",
+      "publishedPath": "content/published/bosses.json",
+      "status": "pending-verification"
+    },
+    {
+      "domain": "sources",
+      "rawPath": "content/raw/sources",
+      "publishedPath": "content/published/sources.json",
+      "status": "pending-verification"
+    }
+  ]
+}
