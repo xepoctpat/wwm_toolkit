@@ -4,6 +4,7 @@ import {
     createToolkitFoundationSnapshot,
     hydrateToolkitFoundationState,
     parseLegacyToolkitState,
+    parseToolkitFoundationSnapshot,
     type ToolkitFoundationSnapshot,
     type ToolkitPersistenceAdapter,
 } from "../app/src/lib/storage/toolkitPersistence";
@@ -42,6 +43,8 @@ describe("toolkit persistence bridge", () => {
                 },
                 customMaps: {
                     Qinghe: "data:image/png;base64,abc123",
+                    Kaifeng: "javascript:alert(1)",
+                    Liangzhou: "data:image/svg+xml;base64,PHN2Zy8+",
                     Hexi: "",
                 },
             }),
@@ -58,6 +61,27 @@ describe("toolkit persistence bridge", () => {
             customMaps: {
                 Qinghe: "data:image/png;base64,abc123",
             },
+        });
+    });
+
+    it("rejects unsafe custom map payloads in persisted foundation snapshots", () => {
+        const snapshot = parseToolkitFoundationSnapshot({
+            schemaVersion: 1,
+            importedAt: null,
+            lastSyncedAt: "2026-04-16T12:00:00.000Z",
+            source: "foundation-defaults",
+            favorites: [],
+            npcProgress: {},
+            npcNotes: {},
+            customMaps: {
+                Qinghe: "data:image/png;base64,abc123",
+                Kaifeng: "javascript:alert(1)",
+                Hexi: "data:image/svg+xml;base64,PHN2Zy8+",
+            },
+        });
+
+        expect(snapshot?.customMaps).toEqual({
+            Qinghe: "data:image/png;base64,abc123",
         });
     });
 

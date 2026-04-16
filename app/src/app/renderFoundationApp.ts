@@ -72,6 +72,8 @@ type QingheGuideAction =
     | "qinghe-campaign-gate"
     | "next-region-gates";
 
+const SAFE_EXTERNAL_PROTOCOLS = new Set(["http:", "https:"]);
+
 function escapeHtml(value: string | number | null | undefined) {
     return String(value ?? "")
         .replaceAll("&", "&amp;")
@@ -79,6 +81,25 @@ function escapeHtml(value: string | number | null | undefined) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#39;");
+}
+
+function sanitizeExternalUrl(value: string) {
+    try {
+        const parsedUrl = new URL(value, globalThis.location?.href ?? "https://example.invalid/");
+        return SAFE_EXTERNAL_PROTOCOLS.has(parsedUrl.protocol) ? parsedUrl.href : null;
+    } catch {
+        return null;
+    }
+}
+
+function renderSafeExternalLink(label: string, url: string, className = "inline-link") {
+    const safeUrl = sanitizeExternalUrl(url);
+
+    if (!safeUrl) {
+        return `<span class="${className}">${escapeHtml(label)}</span>`;
+    }
+
+    return `<a class="${className}" href="${escapeHtml(safeUrl)}" target="_blank" rel="noreferrer noopener">${escapeHtml(label)}</a>`;
 }
 
 function formatTimestamp(value: string | null) {
@@ -310,9 +331,7 @@ function renderSourceReferenceSection(sourceIds: string[]) {
                     .map(
                         (source) => `
                             <li>
-                                <a class="inline-link" href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">
-                                    ${escapeHtml(source.title)}
-                                </a>
+                                ${renderSafeExternalLink(source.title, source.url)}
                             </li>
                         `,
                     )
@@ -644,7 +663,7 @@ function renderCodexDetailPanel(document: CodexSearchDocument | null) {
             <p>${escapeHtml(document.summary)}</p>
 
             ${document.domain === "sources"
-                ? `<p><a class="inline-link" href="${escapeHtml(document.url)}" target="_blank" rel="noreferrer">Open source page</a></p>`
+                ? `<p>${renderSafeExternalLink("Open source page", document.url)}</p>`
                 : ""}
 
             <dl class="detail-list">

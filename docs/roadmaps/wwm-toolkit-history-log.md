@@ -17,6 +17,87 @@ This log tells you **how it got there**.
 
 ---
 
+## 2026-04-16 — Open-source security hardening pass landed
+
+### What changed
+
+The repo gained a focused hardening pass for open-source publication:
+
+- safer handling of external URLs in both the legacy prototype and modular app
+- stricter validation and sanitization for persisted custom-map data URLs
+- tighter file-type and file-size checks for custom map uploads
+- browser referrer-policy metadata on both app entry pages
+- a root `SECURITY.md` policy
+- Dependabot configuration for npm and GitHub Actions
+- a CodeQL workflow for JavaScript/TypeScript and Python scanning
+
+### Why it was added
+
+The project is moving toward an open-source development model, which changes the threat profile. It is no longer enough for the app to merely work; it also needs clearer guardrails around untrusted URLs, browser-stored payloads, uploads, and dependency/workflow hygiene.
+
+### Key files and surfaces
+
+- `assets/js/app.js`
+- `app/src/app/renderFoundationApp.ts`
+- `app/src/lib/storage/toolkitPersistence.ts`
+- `tests/toolkitPersistence.test.ts`
+- `app/index.html`
+- `legacy-prototype.html`
+- `SECURITY.md`
+- `.github/dependabot.yml`
+- `.github/workflows/codeql.yml`
+
+### Verification
+
+- custom-map sanitization coverage was expanded in persistence tests
+- frontend tests passed after the hardening changes
+- frontend lint passed after the hardening changes
+- production build passed after the hardening changes
+- `npm audit --omit=dev` reported zero production vulnerabilities at verification time
+- browser verification confirmed the modular app still rendered correctly at the fixed local preview URL
+
+### Follow-up after this slice
+
+- consider adding a dedicated dependency-review workflow for pull requests
+- keep security fixes landing on `wind` first until a release/version support matrix exists
+- revisit CSP hardening later once Phase A refactoring reduces the amount of UI rendered through large template strings
+
+---
+
+## 2026-04-16 — Fixed local dev launch path added for the modular app
+
+### What changed
+
+The repo gained a predictable local launch path for the modular Vite app:
+
+- added `npm run dev:local`
+- pinned the local modular-app URL to `http://127.0.0.1:4173/`
+- added a matching workspace task for the same flow
+- documented the fixed local preview path in the README
+
+### Why it was added
+
+The modular app itself was rendering correctly, but ad hoc dev-server launches were too easy to misfire or leave behind a stale browser tab that looked like a broken white screen. The purpose of this slice was to make local preview boring and predictable.
+
+### Key files and surfaces
+
+- `package.json`
+- `.vscode/tasks.json`
+- `README.md`
+- `docs/roadmaps/wwm-toolkit-phase-status.md`
+
+### Verification
+
+- the local dev HTML entry was served successfully by Vite after relaunch
+- browser verification confirmed the modular app rendered the Qinghe-first guide, flowchart pilot, and codex search instead of a blank page
+
+### Follow-up after this slice
+
+- consider whether a similarly pinned `preview` script is worth adding for built-app smoke tests
+- keep using the fixed local launch path while Phase A refactoring turns the modular app into the primary surface
+
+---
+
 ## 2026-04-16 — Legacy prototype entry renamed for clearer app boundaries
 
 ### What changed

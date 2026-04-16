@@ -34,6 +34,8 @@ This file is the living execution tracker for the broader `WWM Toolkit` roadmap.
 - Added workspace-local Python environment enforcement for new terminals via `.vscode/settings.json` and `scripts_py/activate_wwm_toolkit_env.ps1`
 - Added terminal `Path` / `VIRTUAL_ENV` injection and explicit workspace tasks so local Python is the default path for new terminals and pipeline actions
 - Added a one-click `Validate: Phase 1 foundation` task that runs build, test, lint, manifest generation, and manifest validation in sequence
+- Added a fixed local dev script and matching workspace task so the modular app can be previewed predictably at `http://127.0.0.1:4173/` instead of relying on ad hoc Vite arguments
+- Added open-source security hardening around safer external-link handling, stricter custom-map validation/sanitization, a repository `SECURITY.md`, Dependabot updates, and CodeQL scanning
 - Added an IndexedDB-first migration bridge in the modular app with localStorage fallback and legacy prototype snapshot import
 - Started reviewed quest/storyline ingestion with 3 main-story chapter entries, 13 top-level story quests, initial campaign examples, and source-backed cross-link tests
 - Added a documentation map and dated history log so milestones stay traceable by purpose, files, and verification state

@@ -47,6 +47,22 @@ The legacy root prototype in `legacy-prototype.html` is still intentionally `fil
 
 Modern browsers treat the built JavaScript module and linked stylesheet assets as cross-origin fetches under `file://`, so opening `dist/index.html` directly can fail with CORS-style errors even though the app itself is fine.
 
+## Local modular app preview
+
+For a predictable local preview of the modular app, use:
+
+- `npm run dev:local`
+
+That serves the app at:
+
+- `http://127.0.0.1:4173/`
+
+The workspace also includes a matching task:
+
+- `Frontend: Dev foundation locally`
+
+The local script uses Vite's strict-port mode so the URL stays fixed instead of silently drifting to a different port.
+
 ## Research-backed notes
 
 - The Steam store confirms **AI-driven NPC text and voice chat**.
@@ -83,6 +99,17 @@ See `docs/roadmaps/wwm-toolkit-full-product-plan.md` for the full product scope.
 The active migration status lives in `docs/roadmaps/wwm-toolkit-phase-status.md`.
 
 The documentation purpose map lives in `docs/roadmaps/wwm-toolkit-documentation-map.md`, and the dated implementation trail lives in `docs/roadmaps/wwm-toolkit-history-log.md`.
+
+## Security
+
+This repository now includes a dedicated security policy in `SECURITY.md`.
+
+Current hardening highlights include:
+
+- safer parsing of persisted browser state
+- stricter custom-map validation for local uploads and migrated storage
+- safer external-link handling that only permits `http` / `https` targets
+- dependency and code-scanning automation for the open-source repo surface
 
 ## Map policy
 

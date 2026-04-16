@@ -31,6 +31,17 @@ Use for:
 
 Do **not** use it as the full historical log. It should stay readable for a new contributor.
 
+### `SECURITY.md`
+
+Use for:
+
+- supported security-fix branch expectations
+- vulnerability reporting guidance
+- disclosure norms for the open-source repo
+- clarifying which classes of issues are security-relevant here
+
+This is the **security reporting and disclosure document**.
+
 ### `docs/roadmaps/wwm-toolkit-full-product-plan.md`
 
 Use for:

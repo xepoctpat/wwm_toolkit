@@ -8,6 +8,8 @@ const FOUNDATION_INDEXED_DB_NAME = "wwm-toolkit-foundation";
 const FOUNDATION_INDEXED_DB_VERSION = 1;
 const FOUNDATION_INDEXED_DB_STORE = "snapshots";
 const FOUNDATION_INDEXED_DB_KEY = "foundation";
+const MAX_CUSTOM_MAP_DATA_URL_LENGTH = 5_000_000;
+const SAFE_CUSTOM_MAP_DATA_URL_PATTERN = /^data:image\/(?:png|jpe?g|webp|gif|avif);base64,[a-z0-9+/]+=*$/i;
 
 const progressStatusSchema = z.enum(["untracked", "working", "solved"]);
 const stringArraySchema = z.array(z.string());
@@ -111,12 +113,29 @@ function sanitizeStringRecord(values: Record<string, unknown>) {
     );
 }
 
+function isSafeCustomMapDataUrl(value: unknown): value is string {
+    return (
+        typeof value === "string" &&
+        value.length > 0 &&
+        value.length <= MAX_CUSTOM_MAP_DATA_URL_LENGTH &&
+        SAFE_CUSTOM_MAP_DATA_URL_PATTERN.test(value)
+    );
+}
+
+function sanitizeCustomMapRecord(values: Record<string, unknown>) {
+    return Object.fromEntries(
+        Object.entries(values).filter(
+            (entry): entry is [string, string] => entry[0].trim().length > 0 && isSafeCustomMapDataUrl(entry[1]),
+        ),
+    );
+}
+
 export function normalizeLegacyToolkitState(input: z.infer<typeof rawLegacyToolkitStateSchema>): LegacyToolkitState {
     return {
         favorites: sanitizeStringArray(input.favorites),
         npcProgress: sanitizeNpcProgress(input.npcProgress),
         npcNotes: sanitizeStringRecord(input.npcNotes),
-        customMaps: sanitizeStringRecord(input.customMaps),
+        customMaps: sanitizeCustomMapRecord(input.customMaps),
     };
 }
 
@@ -150,7 +169,7 @@ export function parseToolkitFoundationSnapshot(snapshot: unknown): ToolkitFounda
         favorites: sanitizeStringArray(result.data.favorites),
         npcProgress: sanitizeNpcProgress(result.data.npcProgress),
         npcNotes: sanitizeStringRecord(result.data.npcNotes),
-        customMaps: sanitizeStringRecord(result.data.customMaps),
+        customMaps: sanitizeCustomMapRecord(result.data.customMaps),
     };
 }
 

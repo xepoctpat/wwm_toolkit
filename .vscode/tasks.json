@@ -2,6 +2,17 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Frontend: Dev foundation locally",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "dev:local"
+      ],
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
       "label": "Frontend: Build foundation",
       "type": "shell",
       "command": "npm",

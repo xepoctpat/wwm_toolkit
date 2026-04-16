@@ -73,6 +73,11 @@ const regionReferences = {
 };
 
 const storageKey = "wwm-toolkit-state-v4";
+const MAX_CUSTOM_MAP_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_CUSTOM_MAP_DATA_URL_LENGTH = 5_000_000;
+const safeExternalProtocols = new Set(["http:", "https:"]);
+const allowedCustomMapTypes = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif", "image/avif"]);
+const safeCustomMapDataUrlPattern = /^data:image\/(?:png|jpe?g|webp|gif|avif);base64,[a-z0-9+/]+=*$/i;
 let persistTimer = 0;
 
 function createDefaultState() {
@@ -98,7 +103,8 @@ function loadState() {
     const defaults = createDefaultState();
 
     try {
-        const savedState = JSON.parse(window.localStorage.getItem(storageKey) ?? "{}");
+        const parsedState = JSON.parse(window.localStorage.getItem(storageKey) ?? "{}");
+        const savedState = parsedState && typeof parsedState === "object" ? parsedState : {};
         const npcProgress = Object.fromEntries(
             Object.entries(savedState.npcProgress ?? {}).filter(([npcId, status]) => npcMap.has(npcId) && progressStatuses.includes(status)),
         );
@@ -106,7 +112,7 @@ function loadState() {
             Object.entries(savedState.npcNotes ?? {}).filter(([npcId, note]) => npcMap.has(npcId) && typeof note === "string"),
         );
         const customMaps = Object.fromEntries(
-            Object.entries(savedState.customMaps ?? {}).filter(([region, dataUrl]) => regions.includes(region) && typeof dataUrl === "string" && dataUrl.length > 0),
+            Object.entries(savedState.customMaps ?? {}).filter(([region, dataUrl]) => regions.includes(region) && isSafeCustomMapDataUrl(dataUrl)),
         );
 
         return {
@@ -167,6 +173,19 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#39;");
+}
+
+function sanitizeExternalUrl(value) {
+    try {
+        const parsedUrl = new URL(String(value ?? ""), window.location.href);
+        return safeExternalProtocols.has(parsedUrl.protocol) ? parsedUrl.href : null;
+    } catch {
+        return null;
+    }
+}
+
+function isSafeCustomMapDataUrl(value) {
+    return typeof value === "string" && value.length > 0 && value.length <= MAX_CUSTOM_MAP_DATA_URL_LENGTH && safeCustomMapDataUrlPattern.test(value);
 }
 
 function getNpc(id) {
@@ -407,8 +426,14 @@ function renderSourceLink(sourceId) {
         return "";
     }
 
+    const safeUrl = sanitizeExternalUrl(source.url);
+
+    if (!safeUrl) {
+        return `<span class="source-chip">${escapeHtml(source.title)}</span>`;
+    }
+
     return `
-        <a class="source-chip" href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer noopener">
+        <a class="source-chip" href="${escapeHtml(safeUrl)}" target="_blank" rel="noreferrer noopener">
             ${escapeHtml(source.title)} ↗
         </a>
     `;
@@ -763,7 +788,7 @@ function renderMap() {
                 </div>
 
                 <div class="map-board region-${escapeHtml(mapRegion.toLowerCase())} ${customMap ? "has-custom-map" : ""}" aria-label="${escapeHtml(mapRegion)} route map">
-                    ${customMap ? `<div class="map-skin" style="background-image: url(${customMap});" aria-hidden="true"></div>` : ""}
+                    ${customMap ? `<div class="map-skin" style="background-image: url('${escapeHtml(customMap)}');" aria-hidden="true"></div>` : ""}
                     ${meta.landmarks.map((landmark) => `
                         <span class="map-landmark" style="left: ${landmark.x}%; top: ${landmark.y}%">${escapeHtml(landmark.name)}</span>
                     `).join("")}
@@ -781,9 +806,24 @@ function renderMap() {
                 <div class="reference-grid">
                     ${references.map((reference) => {
                         const source = getSource(reference.sourceId);
+                        const safeUrl = source ? sanitizeExternalUrl(source.url) : null;
+
+                        if (!source) {
+                            return "";
+                        }
+
+                        if (!safeUrl) {
+                            return `
+                                <div class="reference-card" role="note">
+                                    <strong>${escapeHtml(reference.title)}</strong>
+                                    <span>${escapeHtml(reference.body)}</span>
+                                </div>
+                            `;
+                        }
+
                         return source
                             ? `
-                                <a class="reference-card" href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer noopener">
+                                <a class="reference-card" href="${escapeHtml(safeUrl)}" target="_blank" rel="noreferrer noopener">
                                     <strong>${escapeHtml(reference.title)}</strong>
                                     <span>${escapeHtml(reference.body)}</span>
                                 </a>
@@ -960,7 +1000,12 @@ function renderSources() {
                         <li><strong>Caveat:</strong> ${escapeHtml(source.caveat)}</li>
                     </ul>
 
-                    <a class="source-link" href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer noopener">Open source ↗</a>
+                    ${(() => {
+                        const safeUrl = sanitizeExternalUrl(source.url);
+                        return safeUrl
+                            ? `<a class="source-link" href="${escapeHtml(safeUrl)}" target="_blank" rel="noreferrer noopener">Open source ↗</a>`
+                            : `<span class="muted-text">Open-source link unavailable</span>`;
+                    })()}
                 </article>
             `).join("")}
         </div>
@@ -1103,10 +1148,30 @@ async function compressImageFile(file) {
 }
 
 async function handleCustomMapUpload(region, file) {
+    if (!regions.includes(region)) {
+        window.alert("That region is not recognized by the toolkit.");
+        return;
+    }
+
+    if (!file || !allowedCustomMapTypes.has(file.type)) {
+        window.alert("Use a PNG, JPG, WebP, GIF, or AVIF image for custom map overlays.");
+        return;
+    }
+
+    if (file.size > MAX_CUSTOM_MAP_FILE_SIZE_BYTES) {
+        window.alert("That image is too large to process safely. Try a file under 10 MB or crop it first.");
+        return;
+    }
+
     const previousMap = getCustomMap(region);
 
     try {
         const compressedMap = await compressImageFile(file);
+
+        if (!isSafeCustomMapDataUrl(compressedMap)) {
+            throw new Error("Unsupported or unsafe custom map format.");
+        }
+
         state.customMaps[region] = compressedMap;
 
         if (!persistState()) {
