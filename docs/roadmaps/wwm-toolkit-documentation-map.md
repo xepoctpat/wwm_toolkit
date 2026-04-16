@@ -64,6 +64,17 @@ Use for:
 
 This is the **assembly/execution document**.
 
+### `docs/roadmaps/wwm-toolkit-phase-a-handoff.md`
+
+Use for:
+
+- the concrete kickoff packet for the modular-app refactor
+- the exact responsibility split planned for Phase A
+- extraction order and guardrails for shrinking `renderFoundationApp.ts`
+- defining what counts as “prepared” versus “actually refactored”
+
+This is the **Phase A handoff and execution-prep document**.
+
 ### `docs/roadmaps/wwm-toolkit-phase-status.md`
 
 Use for:

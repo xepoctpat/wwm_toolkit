@@ -17,6 +17,40 @@ This log tells you **how it got there**.
 
 ---
 
+## 2026-04-16 — Phase A handoff prepared before the refactor
+
+### What changed
+
+The repo gained a dedicated Phase A kickoff packet for the modular-app refactor:
+
+- defined the current overgrown responsibilities inside `app/src/app/renderFoundationApp.ts`
+- documented a recommended module split for state, shell, render sections, and event handlers
+- documented the extraction order for the refactor so the work can proceed in small reviewable slices
+- documented the Phase A guardrails and validation loop
+
+### Why it was added
+
+The project needed a clean pause point before the architectural split begins. The purpose of this slice was to make the next step executable without starting the refactor impulsively or relying on chat history as the only plan.
+
+### Key files and surfaces
+
+- `docs/roadmaps/wwm-toolkit-phase-a-handoff.md`
+- `docs/roadmaps/wwm-toolkit-documentation-map.md`
+- `docs/roadmaps/wwm-toolkit-phase-status.md`
+
+### Verification
+
+- the handoff was cross-checked against the current Phase A definition in the assembly roadmap
+- the handoff was cross-checked against the actual responsibilities still present in `app/src/app/renderFoundationApp.ts`
+- the documentation map and phase tracker now point to the handoff explicitly
+
+### Follow-up after this slice
+
+- begin Phase A by extracting shared formatting helpers and UI-state helpers first
+- keep the first refactor commits structural and avoid mixing in new content work
+
+---
+
 ## 2026-04-16 — Open-source security hardening pass landed
 
 ### What changed

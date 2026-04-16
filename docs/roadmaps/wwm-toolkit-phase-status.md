@@ -36,6 +36,7 @@ This file is the living execution tracker for the broader `WWM Toolkit` roadmap.
 - Added a one-click `Validate: Phase 1 foundation` task that runs build, test, lint, manifest generation, and manifest validation in sequence
 - Added a fixed local dev script and matching workspace task so the modular app can be previewed predictably at `http://127.0.0.1:4173/` instead of relying on ad hoc Vite arguments
 - Added open-source security hardening around safer external-link handling, stricter custom-map validation/sanitization, a repository `SECURITY.md`, Dependabot updates, and CodeQL scanning
+- Added a dedicated Phase A handoff document that defines the planned module split, extraction order, and guardrails for turning the modular app into the primary surface without starting the refactor blindly
 - Added an IndexedDB-first migration bridge in the modular app with localStorage fallback and legacy prototype snapshot import
 - Started reviewed quest/storyline ingestion with 3 main-story chapter entries, 13 top-level story quests, initial campaign examples, and source-backed cross-link tests
 - Added a documentation map and dated history log so milestones stay traceable by purpose, files, and verification state
@@ -58,6 +59,7 @@ This file is the living execution tracker for the broader `WWM Toolkit` roadmap.
 
 - Full product scope: `docs/roadmaps/wwm-toolkit-full-product-plan.md`
 - Assembly roadmap: `docs/roadmaps/wwm-toolkit-assembly-roadmap.md`
+- Phase A handoff: `docs/roadmaps/wwm-toolkit-phase-a-handoff.md`
 - Documentation map: `docs/roadmaps/wwm-toolkit-documentation-map.md`
 - Historical log: `docs/roadmaps/wwm-toolkit-history-log.md`
 - Original prototype roadmap: `docs/roadmaps/wwm-toolkit-upgrade.md`
