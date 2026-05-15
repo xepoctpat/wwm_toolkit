@@ -75,6 +75,17 @@ Use for:
 
 This is the **Phase A handoff and execution-prep document**.
 
+### `docs/roadmaps/wwm-toolkit-qinghe-modularity-checkpoint-handoff.md`
+
+Use for:
+
+- the stable checkpoint reached after the graph-first Qinghe workbench landed
+- recording what is already solid in the current renderer-neutral graph / vanilla graph / Mermaid fallback setup
+- defining the next “deepen Qinghe before broadening scope” rule
+- handing the next contributor a concrete proving-ground plan for route modules, loops, and cross-links
+
+This is the **current checkpoint handoff document** for the Qinghe modularity pass.
+
 ### `docs/roadmaps/wwm-toolkit-graph-rendering-strategy.md`
 
 Use for:
@@ -174,6 +185,7 @@ For any meaningful milestone, update the following on purpose:
 
 - `docs/roadmaps/wwm-toolkit-graph-rendering-strategy.md`
 - `docs/roadmaps/wwm-toolkit-phase-a-handoff.md` if ownership boundaries change
+- `docs/roadmaps/wwm-toolkit-qinghe-modularity-checkpoint-handoff.md` when the Qinghe proving-ground plan changes
 - `README.md` if user-facing chart behavior changes
 
 ## What each milestone entry should capture
@@ -196,6 +208,7 @@ As of `2026-05-15`, the project is using this practical rhythm:
 - history log for milestone chronology
 - raw evidence notes for content provenance
 - graph-rendering strategy for Mermaid replacement decisions
+- checkpoint handoff for the current Qinghe modularity proving ground
 - modular source packs plus tests for machine-checkable structure
 
 That combination is intentionally boring — which is excellent news for future debugging.

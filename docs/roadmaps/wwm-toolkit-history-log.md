@@ -17,6 +17,57 @@ This log tells you **how it got there**.
 
 ---
 
+## 2026-05-15 — Renderer-neutral graph checkpoint stabilized around Qinghe modularity
+
+### What changed
+
+The modular app’s flowchart work crossed from “Mermaid pilot” into a more stable graph workspace checkpoint:
+
+- extracted a renderer-neutral quest graph model plus a Mermaid compatibility adapter
+- added a vanilla HTML/SVG graph renderer and made it the default chart surface while keeping Mermaid as the fallback
+- reworked the page into a graph-first flowchart workbench with wider stage usage, compact chart filters, and graph-before-guide hierarchy
+- added explicit Qinghe route modules so the main spine, exploration loop, Meridian detour, and campaign ladder read as named structures rather than loose edge trivia
+- added module actions that can jump between related Qinghe charts, including the campaign ladder and late-Chapter 1 link
+- refreshed the checkpoint docs and added a dedicated Qinghe modularity handoff for the next proving-ground pass
+
+### Why it was added
+
+The project needed a stable checkpoint before broadening content again. The important shift was to prove that the new graph workspace can carry a denser local content slice — Qinghe, its loops, and its cross-links — without immediately exploding into a cross-region sprawl or another Mermaid-only dead end.
+
+### Key files and surfaces
+
+- `app/src/lib/flowcharts/questFlowchartModel.ts`
+- `app/src/lib/flowcharts/renderers/mermaidQuestFlowchartAdapter.ts`
+- `app/src/lib/flowcharts/renderers/vanillaQuestFlowchartRenderer.ts`
+- `app/src/lib/flowcharts/questFlowcharts.ts`
+- `app/src/app/renderFoundationApp.ts`
+- `app/src/styles.css`
+- `tests/questFlowcharts.test.ts`
+- `tests/mermaidQuestFlowchartAdapter.test.ts`
+- `tests/vanillaQuestFlowchartRenderer.test.ts`
+- `docs/roadmaps/wwm-toolkit-phase-status.md`
+- `docs/roadmaps/wwm-toolkit-assembly-roadmap.md`
+- `docs/roadmaps/wwm-toolkit-phase-a-handoff.md`
+- `docs/roadmaps/wwm-toolkit-qinghe-modularity-checkpoint-handoff.md`
+- `docs/roadmaps/wwm-toolkit-documentation-map.md`
+- `README.md`
+
+### Verification
+
+- frontend tests passed: `47/47`
+- frontend lint passed
+- production build passed
+- live browser verification confirmed the default Qinghe progression scope, working chart filters, working graph-module actions, and linked movement into the Qinghe campaign chart
+
+### Follow-up after this slice
+
+- split the current graph/filter/module workbench out of `renderFoundationApp.ts`
+- keep Qinghe as the proving ground by adding more region-local structure before broadening the next region slice
+- turn the current route-module layer into reusable builders instead of leaving it as Qinghe-specific inline data
+- keep literal encounter normalization separate until its evidence is strong enough to model honestly
+
+---
+
 ## 2026-05-15 — Mermaid dependency alerts resolved
 
 ### What changed

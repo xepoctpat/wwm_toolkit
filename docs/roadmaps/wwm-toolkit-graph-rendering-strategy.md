@@ -1,8 +1,8 @@
 # WWM Toolkit Graph Rendering Strategy
 
-This document tracks the strategy for replacing or evolving the current Mermaid-backed flowchart pilot.
+This document tracks the strategy for replacing or evolving the current graph workspace.
 
-It exists because the app now has useful progression charts, but the chart data should not stay locked inside Mermaid syntax forever.
+It exists because the app now has useful progression charts, but the chart data should not stay locked inside Mermaid syntax forever — and the current graph workspace is already past the pure-Mermaid pilot stage.
 
 ## Current chart state
 
@@ -13,7 +13,7 @@ The modular app currently renders `8` chart definitions from `app/src/lib/flowch
 - three main-story chapter flowcharts
 - three region campaign-branch charts
 
-Those definitions are currently stored as Mermaid strings plus metadata:
+Those definitions are now stored as graph data plus metadata:
 
 - chart ID
 - title
@@ -21,9 +21,18 @@ Those definitions are currently stored as Mermaid strings plus metadata:
 - summary
 - region IDs
 - linked codex entry IDs
-- Mermaid source
+- optional route modules for charts that expose loop/cross-link structure directly
+- graph nodes and edges
+- Mermaid source generated from the graph as fallback output
 
-This works well enough for a pilot, but it makes Mermaid the effective source of truth for node and edge structure. That is the wrong long-term boundary.
+Current repo state:
+
+- `app/src/lib/flowcharts/questFlowchartModel.ts` defines the renderer-neutral quest graph shape
+- `app/src/lib/flowcharts/renderers/mermaidQuestFlowchartAdapter.ts` generates Mermaid from that graph
+- `app/src/lib/flowcharts/renderers/vanillaQuestFlowchartRenderer.ts` renders the default HTML/SVG graph view
+- Mermaid remains the compatibility fallback renderer in the UI
+
+That is the right long-term boundary. The remaining work is about proving and generalizing the model, not re-winning the argument for separating Mermaid from canonical chart data.
 
 ## Local `understand-anything` repo evaluation
 
@@ -49,15 +58,15 @@ Why not:
 
 ## Strategic decision
 
-Do **not** replace Mermaid immediately.
+Do **not** remove Mermaid immediately.
 
 Instead:
 
-1. make graph data renderer-neutral
-2. keep Mermaid as the compatibility adapter
-3. test that the existing chart labels, linked entries, and chart IDs stay stable
-4. prototype a richer renderer after the adapter boundary exists
-5. use `understand-anything` as a reference for graph-view patterns, not as a required local dependency
+1. keep graph data renderer-neutral
+2. keep Mermaid as the compatibility adapter / fallback output
+3. keep proving the default vanilla graph renderer against denser Qinghe-local structure
+4. use `understand-anything` as a reference for graph-view patterns, not as a required local dependency
+5. only revisit a larger renderer replacement after the module model and feature ownership are cleaner
 
 This avoids turning a chart improvement into a surprise app-framework migration.
 
@@ -92,21 +101,31 @@ Mermaid output should be generated from that model, not hand-assembled as the on
 
 ### Step 1 — Adapter boundary
 
-Extract the current Mermaid generation into two layers:
+This step is now complete.
+
+The current Mermaid generation is already split into two layers:
 
 - graph-model builder
 - Mermaid serializer
 
-Exit criteria:
+Completed exit criteria:
 
 - existing chart count and IDs remain unchanged
-- existing chart tests still pass
+- dedicated graph / adapter / renderer tests now pass
 - chart linked-entry IDs are still validated
-- the UI still renders Mermaid diagrams exactly as before
+- the UI can still render Mermaid diagrams as fallback output
 
 ### Step 2 — Renderer spike
 
-Build a small prototype against the renderer-neutral graph model.
+This step is also already in progress.
+
+The repo now has a working vanilla graph renderer prototype against the renderer-neutral model.
+
+The current proving-ground questions are:
+
+- can the graph use available stage space well enough for real route work?
+- can Qinghe loops, ladders, and detours be expressed as explicit route modules instead of one-off edge labels?
+- can linked chart transitions stay coherent as Qinghe-local structure deepens?
 
 Evaluate two paths:
 
@@ -116,9 +135,10 @@ Evaluate two paths:
    - accept React as a focused dependency only if the UX payoff is clear
 
 2. **Vanilla graph renderer**
-   - use the same model and possibly ELK layout, but render with SVG/HTML from the existing TypeScript app
-   - keep dependencies smaller
-   - avoid app-framework split-brain for now
+  - use the same model and possibly ELK layout, but render with SVG/HTML from the existing TypeScript app
+  - keep dependencies smaller
+  - avoid app-framework split-brain for now
+  - this is the current default path already being proved in Qinghe
 
 Exit criteria:
 
@@ -137,17 +157,25 @@ Only remove Mermaid after the richer renderer proves it can support:
 - mobile-friendly layout behavior
 - export or copyable fallback output
 - clear failure states when layout/rendering fails
+- reusable route-module semantics beyond Qinghe-specific inline setup
 
 ## Risks to manage
 
 - **Framework drift:** adding React only for charts could create two UI paradigms unless the graph panel is isolated carefully.
 - **Dependency weight:** React Flow, ELK, and related utilities are much heavier than Mermaid.
 - **Source-of-truth confusion:** Mermaid and a richer graph renderer must not diverge; both should read the same graph model during the transition.
+- **Overfitting to Qinghe:** the current module layer is intentionally Qinghe-heavy; the next pass must prove it is reusable rather than assuming one region’s pattern fits all future charts automatically.
 - **Taxonomy mistakes:** chart nodes must preserve the important separation between `campaign`, `exploration`, `jianghu-legacy`, and literal `encounter` activity layers.
 - **Local dependency trap:** do not depend on `E:\Understanding\understand-anything-plugin` from this repo. If code is reused later, vendor intentionally, publish a package, or reimplement only the small patterns needed.
 
 ## Recommended next action
 
-Add the renderer-neutral quest graph model during Phase A, while `renderFoundationApp.ts` is already being split.
+Keep using Qinghe as the proving ground while the graph workspace is split into owned modules.
+
+Specifically:
+
+1. extract the graph/filter/module workspace out of `renderFoundationApp.ts`
+2. add more Qinghe-local route structure before broadening to another region slice
+3. generalize route-module builders only after the Qinghe proof is strong enough
 
 That keeps chart strategy aligned with app assembly instead of starting a separate visualization rewrite.

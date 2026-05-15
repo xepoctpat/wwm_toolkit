@@ -89,7 +89,8 @@ Current confirmed state:
 
 - the modular app leads with a Qinghe-first route guide instead of migration scaffolding
 - codex search indexes `50` reviewed entries across `3` regions, `31` quests, `3` storylines, and `13` sources
-- the flowchart pilot exposes `8` Mermaid-backed charts for progression, storyline, and campaign slices
+- the flowchart pilot exposes `8` charts driven by a renderer-neutral quest graph model, shown through a vanilla HTML/SVG graph prototype with Mermaid fallback
+- the graph workspace now includes compact chart filters plus explicit Qinghe route modules that can switch between related charts
 - `renderFoundationApp.ts` still owns too much rendering, event wiring, UI state, and diagram hydration
 - the legacy prototype remains useful, but should stay in maintenance mode while the modular app becomes the primary product surface
 
@@ -99,11 +100,11 @@ The next strategic milestone should therefore be treated as an **assembly gate**
 
 Before adding another large content domain, finish these in order:
 
-1. split the modular renderer into owned feature modules
+1. split the modular renderer into owned feature modules, especially the current graph/filter/module workbench
 2. add a clearer top-level app shell / navigation structure
-3. extract the flowchart data into a renderer-neutral graph model
-4. keep the current Mermaid adapter as the compatibility renderer while the replacement is tested
-5. run a small `understand-anything`-inspired graph-rendering spike after the graph model is renderer-neutral
+3. use Qinghe as the modular proving ground by adding more subregion, landmark, gate, and optional-route structure before broadening to another large region slice
+4. generalize the current route-module layer so Qinghe-specific card logic becomes reusable chart structure
+5. keep the Mermaid adapter as the compatibility renderer while the graph prototype and `understand-anything`-inspired ideas are tested from the stable graph-model boundary
 6. freeze the content intake contract and only then pick the next reviewed content slice
 
 The important nuance: `understand-anything` should influence the graph renderer strategy, but it should **not** be wired in as a local path dependency or dropped into the app before the Phase A ownership split. It is a good source of React Flow / ELK graph-view patterns; it is not a direct Mermaid replacement for the current vanilla TypeScript surface.
@@ -302,9 +303,9 @@ These are the most rational next steps from the current state.
    - make the product structure visible in the UI
    - stop presenting one long page as the only shape of the future app
 
-3. **Extract a renderer-neutral quest graph model**
-   - stop treating Mermaid text as the canonical chart data
-   - keep existing Mermaid output as an adapter while tests prove parity
+3. **Generalize the current route-module layer**
+   - stop treating Qinghe modules as inline one-off UI data
+   - turn the current route-module pattern into reusable structure that later regions can inherit
 
 4. **Prototype an `understand-anything`-style graph view**
    - use the local repo as a reference for React Flow / ELK patterns

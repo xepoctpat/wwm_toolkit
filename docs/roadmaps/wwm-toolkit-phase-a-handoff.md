@@ -4,6 +4,18 @@ This document is the **kickoff packet** for Phase A of the assembly roadmap.
 
 It exists so the repo can pause in a clean state **before** the modular-app refactor begins, while still making the next step concrete.
 
+## Status note — 2026-05-15 checkpoint
+
+Since this handoff was first written, the repo has gained:
+
+- a renderer-neutral quest graph model in `app/src/lib/flowcharts/questFlowchartModel.ts`
+- a Mermaid compatibility adapter plus a vanilla HTML/SVG graph renderer
+- compact chart filters and explicit Qinghe route-module cards in the graph workspace
+
+That is good progress, but it does **not** remove the core Phase A problem.
+
+`app/src/app/renderFoundationApp.ts` still owns too much rendering, state, and event wiring, and the new graph/filter/module workbench is now part of that same ownership problem. The current checkpoint handoff for the next content-aware pass lives in `docs/roadmaps/wwm-toolkit-qinghe-modularity-checkpoint-handoff.md`, while this document still covers the structural split that remains unfinished.
+
 ## What Phase A is actually for
 
 Phase A is not a content expansion sprint.
@@ -22,7 +34,7 @@ Right now `app/src/app/renderFoundationApp.ts` owns too much at once:
 - UI state creation and synchronization
 - HTML rendering for the hero, guide, flowcharts, codex, phase tracker, domain cards, and migration panel
 - event wiring for guide actions, codex search, flowchart selection, keyboard navigation, and persistence re-import
-- current Mermaid diagram hydration
+- current graph rendering, Mermaid fallback hydration, chart filters, and Qinghe route-module actions
 - a few shared formatting / sanitization helpers
 
 That file works, but it is already past the point where further growth stays cheap.
@@ -57,6 +69,8 @@ Recommended target layout:
 	- guide surface only
 - `app/src/app/sections/renderFlowchartSection.ts`
 	- flowchart panel only; consume a chart view model rather than owning graph semantics
+- `app/src/app/sections/renderFlowchartModulesSection.ts`
+	- route-module cards and linked-chart actions only
 - `app/src/app/sections/renderCodexSearchSection.ts`
 	- search/results/detail rendering only
 - `app/src/app/sections/renderFoundationOverviewSections.ts`

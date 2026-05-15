@@ -1,8 +1,28 @@
 import type { QuestEntry, QuestPack } from "../../data/schemas/quest";
 import type { RegionPack } from "../../data/schemas/region";
 import type { StorylinePack } from "../../data/schemas/storyline";
+import {
+    createQuestGraphDefinition,
+    createQuestGraphEdge,
+    createQuestGraphNode,
+    type QuestGraphDefinition,
+    type QuestGraphNodeType,
+} from "./questFlowchartModel";
+import { renderQuestGraphDefinitionAsMermaid } from "./renderers/mermaidQuestFlowchartAdapter";
 
 export type QuestFlowchartKind = "progression" | "storyline" | "campaign";
+
+export type QuestFlowchartModuleTone = "main" | "exploration" | "legacy" | "campaign" | "gate";
+
+export interface QuestFlowchartModule {
+    id: string;
+    title: string;
+    summary: string;
+    tone: QuestFlowchartModuleTone;
+    linkedEntryIds: string[];
+    focusEntryId: string;
+    relatedDefinitionId?: string;
+}
 
 export interface QuestFlowchartDefinition {
     id: string;
@@ -11,11 +31,9 @@ export interface QuestFlowchartDefinition {
     summary: string;
     regionIds: string[];
     linkedEntryIds: string[];
+    modules?: QuestFlowchartModule[];
+    graph: QuestGraphDefinition;
     mermaid: string;
-}
-
-function escapeMermaidText(value: string) {
-    return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
 }
 
 function formatDisplayLabel(value: string) {
@@ -30,19 +48,134 @@ function toNodeId(prefix: string, value: string) {
     return `${prefix}_${value.replace(/[^a-zA-Z0-9]+/g, "_")}`;
 }
 
-function appendFlowchartTheme(lines: string[]) {
-    lines.push("    classDef region fill:#0f172a,stroke:#34d399,color:#d1fae5,stroke-width:1.5px;");
-    lines.push("    classDef storyline fill:#172554,stroke:#93c5fd,color:#eff6ff,stroke-width:1.5px;");
-    lines.push("    classDef gate fill:#3f3f46,stroke:#f59e0b,color:#fef3c7,stroke-width:1.2px;");
-    lines.push("    classDef main fill:#111827,stroke:#60a5fa,color:#e2e8f0,stroke-width:1.2px;");
-    lines.push("    classDef campaign fill:#1f2937,stroke:#fbbf24,color:#fef3c7,stroke-width:1.2px;");
-    lines.push("    classDef opportunity fill:#2e1065,stroke:#c084fc,color:#f5d0fe,stroke-width:1.2px;");
-    lines.push("    classDef legacy fill:#052e2b,stroke:#5eead4,color:#ccfbf1,stroke-width:1.2px;");
-    lines.push("");
-}
-
 function uniqueIds(values: string[]) {
     return [...new Set(values.filter(Boolean))];
+}
+
+function createFlowchartDefinition(definition: Omit<QuestFlowchartDefinition, "mermaid">): QuestFlowchartDefinition {
+    return {
+        ...definition,
+        linkedEntryIds: uniqueIds(definition.linkedEntryIds),
+        modules: definition.modules?.map((module) => ({
+            ...module,
+            linkedEntryIds: uniqueIds(module.linkedEntryIds),
+        })),
+        mermaid: renderQuestGraphDefinitionAsMermaid(definition.graph),
+    };
+}
+
+function buildQingheProgressionModules(ids: {
+    storylineId: string;
+    anotherNewWingId: string;
+    whiteBirdId: string;
+    shamelessId: string;
+    horseNeighsId: string;
+    meridianTouchId: string;
+    dustMirrorId: string;
+    finaleId: string;
+    stillShoreId: string;
+    bodhiSeaId?: string;
+    gleamingAbyssId?: string;
+    palaceOfAnnalsId?: string;
+    blissfulRetreatId?: string;
+    haloPeakId?: string;
+}): QuestFlowchartModule[] {
+    return [
+        {
+            id: "qinghe-main-spine",
+            title: "Main spine",
+            summary: "The Chapter 1 route through Qinghe stays the backbone: open with Another New Wing, pivot through A Horse Neighs in the Forest, then bridge into the late-Chapter 1 finale.",
+            tone: "main",
+            linkedEntryIds: [
+                ids.storylineId,
+                ids.anotherNewWingId,
+                ids.horseNeighsId,
+                ids.dustMirrorId,
+                ids.finaleId,
+            ],
+            focusEntryId: ids.anotherNewWingId,
+        },
+        {
+            id: "qinghe-exploration-loop",
+            title: "Exploration loop",
+            summary: "White Bird Shooting and The Shameless currently form the clearest reviewed optional loop off Another New Wing, so they should stay grouped together until deeper route normalization lands.",
+            tone: "exploration",
+            linkedEntryIds: [ids.anotherNewWingId, ids.whiteBirdId, ids.shamelessId],
+            focusEntryId: ids.whiteBirdId,
+        },
+        {
+            id: "qinghe-meridian-detour",
+            title: "Meridian detour",
+            summary: "Meridian Touch is a short but important Jianghu Legacy link off A Horse Neighs in the Forest, and it deserves to read as a named detour instead of a generic side branch.",
+            tone: "legacy",
+            linkedEntryIds: [ids.horseNeighsId, ids.meridianTouchId],
+            focusEntryId: ids.meridianTouchId,
+        },
+        {
+            id: "qinghe-campaign-ladder",
+            title: "Campaign ladder",
+            summary: "Still Shore is only the opening gate. The reviewed Qinghe campaign ladder continues through Moonveil and Sundara, so keep that follow-through explicit even when the progression chart only shows the entry point.",
+            tone: "campaign",
+            linkedEntryIds: uniqueIds([
+                ids.horseNeighsId,
+                ids.stillShoreId,
+                ids.bodhiSeaId ?? "",
+                ids.gleamingAbyssId ?? "",
+                ids.palaceOfAnnalsId ?? "",
+                ids.blissfulRetreatId ?? "",
+                ids.haloPeakId ?? "",
+            ]),
+            focusEntryId: ids.stillShoreId,
+            relatedDefinitionId: "campaign-branches-qinghe",
+        },
+    ];
+}
+
+function buildQingheCampaignModules(ids: {
+    horseNeighsId: string;
+    stillShoreId: string;
+    bodhiSeaId: string;
+    gleamingAbyssId: string;
+    palaceOfAnnalsId: string;
+    finaleId: string;
+    blissfulRetreatId: string;
+    haloPeakId: string;
+}): QuestFlowchartModule[] {
+    return [
+        {
+            id: "qinghe-campaign-entry-gate",
+            title: "Opening gate",
+            summary: "Still Shore is anchored to A Horse Neighs in the Forest, so the first Qinghe campaign branch should always stay visibly tied to that main-story checkpoint.",
+            tone: "campaign",
+            linkedEntryIds: [ids.horseNeighsId, ids.stillShoreId],
+            focusEntryId: ids.stillShoreId,
+        },
+        {
+            id: "qinghe-moonveil-loop",
+            title: "Moonveil loop",
+            summary: "The current reviewed Qinghe ladder loops through Bodhi Sea, Gleaming Abyss, and Palace of Annals before the later Chapter 1 re-entry. Treat it as a campaign module, not a string of isolated side quests.",
+            tone: "campaign",
+            linkedEntryIds: [ids.stillShoreId, ids.bodhiSeaId, ids.gleamingAbyssId, ids.palaceOfAnnalsId],
+            focusEntryId: ids.bodhiSeaId,
+        },
+        {
+            id: "qinghe-late-chapter-link",
+            title: "Late-Chapter 1 link",
+            summary: "Blissful Retreat reconnects the Qinghe campaign ladder to the For Whom Does He Return window, so the late-story link should be visible instead of buried in notes.",
+            tone: "campaign",
+            linkedEntryIds: [ids.finaleId, ids.blissfulRetreatId],
+            focusEntryId: ids.blissfulRetreatId,
+            relatedDefinitionId: "storyline-heaven-has-no-pier-flowchart",
+        },
+        {
+            id: "qinghe-sundara-capstone",
+            title: "Sundara capstone",
+            summary: "Halo Peak is the current reviewed end of Qinghe's campaign route, so it works as the modular capstone until the broader post-Qinghe structure is normalized.",
+            tone: "campaign",
+            linkedEntryIds: [ids.blissfulRetreatId, ids.haloPeakId],
+            focusEntryId: ids.haloPeakId,
+        },
+    ];
 }
 
 function buildRegionLevelProgressionFlowchartDefinition(
@@ -89,40 +222,135 @@ function buildRegionLevelProgressionFlowchartDefinition(
     const hexiGateNodeId = toNodeId("gate", "hexi-level-gate");
     const hexiNodeId = toNodeId("region", hexi.id);
     const hexiStoryNodeId = toNodeId("storyline", hexiStoryline.id);
-    const lines = ["flowchart TD"];
+    const graph = createQuestGraphDefinition();
 
-    appendFlowchartTheme(lines);
-    lines.push(`    ${qingheNodeId}["Region 1<br/>${escapeMermaidText(qinghe.title)}<br/>Start"]:::region`);
-    lines.push(
-        `    ${qingheStoryNodeId}["${escapeMermaidText(qingheStoryline.chapterLabel)}<br/>${escapeMermaidText(qingheStoryline.title)}"]:::storyline`,
-    );
-    lines.push(
-        `    ${qingheHiddenNodeId}["Qinghe optional routes<br/>${escapeMermaidText(whiteBird.title)} / ${escapeMermaidText(shameless.title)}<br/>${escapeMermaidText(meridianTouch.title)}"]:::opportunity`,
-    );
-    lines.push(`    ${kaifengGateNodeId}["Level 32 + world level<br/>Complete Chapter 1"]:::gate`);
-    lines.push(`    ${kaifengNodeId}["Region 2<br/>${escapeMermaidText(kaifeng.title)}"]:::region`);
-    lines.push(
-        `    ${kaifengStoryNodeId}["${escapeMermaidText(kaifengStoryline.chapterLabel)}<br/>${escapeMermaidText(kaifengStoryline.title)}"]:::storyline`,
-    );
-    lines.push(`    ${stillShoreNodeId}["${escapeMermaidText(stillShore.title)}<br/>(Campaign side-quest gate)"]:::campaign`);
-    lines.push(`    ${hexiGateNodeId}["Level 14 + Still Shore<br/>Bamboo Abode mural"]:::gate`);
-    lines.push(`    ${hexiNodeId}["Region 3<br/>${escapeMermaidText(hexi.title)}"]:::region`);
-    lines.push(
-        `    ${hexiStoryNodeId}["${escapeMermaidText(hexiStoryline.chapterLabel)}<br/>${escapeMermaidText(hexiStoryline.title)}"]:::storyline`,
+    graph.nodes.push(
+        createQuestGraphNode({
+            id: qingheNodeId,
+            nodeType: "region",
+            lines: ["Region 1", qinghe.title, "Start"],
+            entryId: qinghe.id,
+        }),
+        createQuestGraphNode({
+            id: qingheStoryNodeId,
+            nodeType: "storyline",
+            lines: [qingheStoryline.chapterLabel, qingheStoryline.title],
+            entryId: qingheStoryline.id,
+        }),
+        createQuestGraphNode({
+            id: qingheHiddenNodeId,
+            nodeType: "opportunity",
+            lines: ["Qinghe optional routes", `${whiteBird.title} / ${shameless.title}`, meridianTouch.title],
+        }),
+        createQuestGraphNode({
+            id: kaifengGateNodeId,
+            nodeType: "gate",
+            lines: ["Level 32 + world level", "Complete Chapter 1"],
+        }),
+        createQuestGraphNode({
+            id: kaifengNodeId,
+            nodeType: "region",
+            lines: ["Region 2", kaifeng.title],
+            entryId: kaifeng.id,
+        }),
+        createQuestGraphNode({
+            id: kaifengStoryNodeId,
+            nodeType: "storyline",
+            lines: [kaifengStoryline.chapterLabel, kaifengStoryline.title],
+            entryId: kaifengStoryline.id,
+        }),
+        createQuestGraphNode({
+            id: stillShoreNodeId,
+            nodeType: "campaign",
+            lines: [stillShore.title, "(Campaign side-quest gate)"],
+            entryId: stillShore.id,
+        }),
+        createQuestGraphNode({
+            id: hexiGateNodeId,
+            nodeType: "gate",
+            lines: ["Level 14 + Still Shore", "Bamboo Abode mural"],
+        }),
+        createQuestGraphNode({
+            id: hexiNodeId,
+            nodeType: "region",
+            lines: ["Region 3", hexi.title],
+            entryId: hexi.id,
+        }),
+        createQuestGraphNode({
+            id: hexiStoryNodeId,
+            nodeType: "storyline",
+            lines: [hexiStoryline.chapterLabel, hexiStoryline.title],
+            entryId: hexiStoryline.id,
+        }),
     );
 
-    lines.push(`    ${qingheNodeId} --> ${qingheStoryNodeId}`);
-    lines.push(`    ${qingheStoryNodeId} -. hidden exploration + mystic arts .-> ${qingheHiddenNodeId}`);
-    lines.push(`    ${qingheStoryNodeId} --> ${kaifengGateNodeId}`);
-    lines.push(`    ${kaifengGateNodeId} --> ${kaifengNodeId}`);
-    lines.push(`    ${kaifengNodeId} --> ${kaifengStoryNodeId}`);
-    lines.push(`    ${qingheStoryNodeId} -. campaign gate in Qinghe .-> ${stillShoreNodeId}`);
-    lines.push(`    ${qingheNodeId} -. mural route starts here .-> ${hexiGateNodeId}`);
-    lines.push(`    ${stillShoreNodeId} --> ${hexiGateNodeId}`);
-    lines.push(`    ${hexiGateNodeId} --> ${hexiNodeId}`);
-    lines.push(`    ${hexiNodeId} --> ${hexiStoryNodeId}`);
+    graph.edges.push(
+        createQuestGraphEdge({
+            sourceId: qingheNodeId,
+            targetId: qingheStoryNodeId,
+            edgeType: "main-path",
+            style: "solid",
+        }),
+        createQuestGraphEdge({
+            sourceId: qingheStoryNodeId,
+            targetId: qingheHiddenNodeId,
+            edgeType: "related-route",
+            style: "dashed",
+            label: "hidden exploration + mystic arts",
+        }),
+        createQuestGraphEdge({
+            sourceId: qingheStoryNodeId,
+            targetId: kaifengGateNodeId,
+            edgeType: "gate",
+            style: "solid",
+        }),
+        createQuestGraphEdge({
+            sourceId: kaifengGateNodeId,
+            targetId: kaifengNodeId,
+            edgeType: "gate",
+            style: "solid",
+        }),
+        createQuestGraphEdge({
+            sourceId: kaifengNodeId,
+            targetId: kaifengStoryNodeId,
+            edgeType: "main-path",
+            style: "solid",
+        }),
+        createQuestGraphEdge({
+            sourceId: qingheStoryNodeId,
+            targetId: stillShoreNodeId,
+            edgeType: "campaign-chain",
+            style: "dashed",
+            label: "campaign gate in Qinghe",
+        }),
+        createQuestGraphEdge({
+            sourceId: qingheNodeId,
+            targetId: hexiGateNodeId,
+            edgeType: "gate",
+            style: "dashed",
+            label: "mural route starts here",
+        }),
+        createQuestGraphEdge({
+            sourceId: stillShoreNodeId,
+            targetId: hexiGateNodeId,
+            edgeType: "gate",
+            style: "solid",
+        }),
+        createQuestGraphEdge({
+            sourceId: hexiGateNodeId,
+            targetId: hexiNodeId,
+            edgeType: "gate",
+            style: "solid",
+        }),
+        createQuestGraphEdge({
+            sourceId: hexiNodeId,
+            targetId: hexiStoryNodeId,
+            edgeType: "main-path",
+            style: "solid",
+        }),
+    );
 
-    return {
+    return createFlowchartDefinition({
         id: "progression-region-level-overview",
         title: "Region and level gate overview",
         kind: "progression" as const,
@@ -141,8 +369,8 @@ function buildRegionLevelProgressionFlowchartDefinition(
             hexi.id,
             hexiStoryline.id,
         ]),
-        mermaid: lines.join("\n"),
-    };
+        graph,
+    });
 }
 
 function buildQingheProgressionFlowchartDefinition(questPack: QuestPack, storylinePack: StorylinePack) {
@@ -156,6 +384,11 @@ function buildQingheProgressionFlowchartDefinition(questPack: QuestPack, storyli
     const dustMirror = questById.get("quest-dust-on-the-rhombus-mirror");
     const finale = questById.get("quest-for-whom-does-he-return");
     const stillShore = questById.get("quest-still-shore");
+    const bodhiSea = questById.get("quest-bodhi-sea");
+    const gleamingAbyss = questById.get("quest-gleaming-abyss");
+    const palaceOfAnnals = questById.get("quest-palace-of-annals");
+    const blissfulRetreat = questById.get("quest-blissful-retreat");
+    const haloPeak = questById.get("quest-halo-peak");
 
     if (!storyline || !anotherNewWing || !whiteBird || !shameless || !horseNeighs || !meridianTouch || !dustMirror || !finale || !stillShore) {
         return null;
@@ -171,32 +404,88 @@ function buildQingheProgressionFlowchartDefinition(questPack: QuestPack, storyli
     const whiteBirdNodeId = toNodeId("quest", whiteBird.id);
     const shamelessNodeId = toNodeId("quest", shameless.id);
     const meridianNodeId = toNodeId("quest", meridianTouch.id);
-    const lines = ["flowchart TD"];
+    const graph = createQuestGraphDefinition();
 
-    appendFlowchartTheme(lines);
-    lines.push(`    ${regionNodeId}["Region<br/>Qinghe"]:::region`);
-    lines.push(
-        `    ${storylineNodeId}["${escapeMermaidText(storyline.chapterLabel)}<br/>${escapeMermaidText(storyline.title)}"]:::storyline`,
+    graph.nodes.push(
+        createQuestGraphNode({
+            id: regionNodeId,
+            nodeType: "region",
+            lines: ["Region", "Qinghe"],
+            entryId: "qinghe",
+        }),
+        createQuestGraphNode({
+            id: storylineNodeId,
+            nodeType: "storyline",
+            lines: [storyline.chapterLabel, storyline.title],
+            entryId: storyline.id,
+        }),
+        createQuestGraphNode({ id: anotherNodeId, nodeType: "main", lines: [anotherNewWing.title], entryId: anotherNewWing.id }),
+        createQuestGraphNode({ id: horseNodeId, nodeType: "main", lines: [horseNeighs.title], entryId: horseNeighs.id }),
+        createQuestGraphNode({ id: dustNodeId, nodeType: "main", lines: [dustMirror.title], entryId: dustMirror.id }),
+        createQuestGraphNode({ id: finaleNodeId, nodeType: "main", lines: [finale.title], entryId: finale.id }),
+        createQuestGraphNode({
+            id: whiteBirdNodeId,
+            nodeType: "opportunity",
+            lines: [whiteBird.title, "(Exploration route)"],
+            entryId: whiteBird.id,
+        }),
+        createQuestGraphNode({
+            id: shamelessNodeId,
+            nodeType: "opportunity",
+            lines: [shameless.title, "(Exploration route)"],
+            entryId: shameless.id,
+        }),
+        createQuestGraphNode({
+            id: meridianNodeId,
+            nodeType: "legacy",
+            lines: [meridianTouch.title, "(Jianghu Legacy / Mystic Art)"],
+            entryId: meridianTouch.id,
+        }),
+        createQuestGraphNode({
+            id: stillShoreNodeId,
+            nodeType: "campaign",
+            lines: [stillShore.title, "(Campaign side quest)"],
+            entryId: stillShore.id,
+        }),
     );
-    lines.push(`    ${anotherNodeId}["${escapeMermaidText(anotherNewWing.title)}"]:::main`);
-    lines.push(`    ${horseNodeId}["${escapeMermaidText(horseNeighs.title)}"]:::main`);
-    lines.push(`    ${dustNodeId}["${escapeMermaidText(dustMirror.title)}"]:::main`);
-    lines.push(`    ${finaleNodeId}["${escapeMermaidText(finale.title)}"]:::main`);
-    lines.push(`    ${whiteBirdNodeId}["${escapeMermaidText(whiteBird.title)}<br/>(Exploration route)"]:::opportunity`);
-    lines.push(`    ${shamelessNodeId}["${escapeMermaidText(shameless.title)}<br/>(Exploration route)"]:::opportunity`);
-    lines.push(`    ${meridianNodeId}["${escapeMermaidText(meridianTouch.title)}<br/>(Jianghu Legacy / Mystic Art)"]:::legacy`);
-    lines.push(`    ${stillShoreNodeId}["${escapeMermaidText(stillShore.title)}<br/>(Campaign side quest)"]:::campaign`);
-    lines.push(`    ${regionNodeId} --> ${storylineNodeId}`);
-    lines.push(`    ${storylineNodeId} --> ${anotherNodeId}`);
-    lines.push(`    ${anotherNodeId} --> ${horseNodeId}`);
-    lines.push(`    ${horseNodeId} --> ${dustNodeId}`);
-    lines.push(`    ${dustNodeId} --> ${finaleNodeId}`);
-    lines.push(`    ${anotherNodeId} -. reviewed exploration route .-> ${whiteBirdNodeId}`);
-    lines.push(`    ${anotherNodeId} -. reviewed exploration route .-> ${shamelessNodeId}`);
-    lines.push(`    ${horseNodeId} -. Jianghu Legacy detour on the road home .-> ${meridianNodeId}`);
-    lines.push(`    ${horseNodeId} -. optional campaign during main quest .-> ${stillShoreNodeId}`);
 
-    return {
+    graph.edges.push(
+        createQuestGraphEdge({ sourceId: regionNodeId, targetId: storylineNodeId, edgeType: "main-path", style: "solid" }),
+        createQuestGraphEdge({ sourceId: storylineNodeId, targetId: anotherNodeId, edgeType: "main-path", style: "solid" }),
+        createQuestGraphEdge({ sourceId: anotherNodeId, targetId: horseNodeId, edgeType: "main-path", style: "solid" }),
+        createQuestGraphEdge({ sourceId: horseNodeId, targetId: dustNodeId, edgeType: "main-path", style: "solid" }),
+        createQuestGraphEdge({ sourceId: dustNodeId, targetId: finaleNodeId, edgeType: "main-path", style: "solid" }),
+        createQuestGraphEdge({
+            sourceId: anotherNodeId,
+            targetId: whiteBirdNodeId,
+            edgeType: "optional-branch",
+            style: "dashed",
+            label: "reviewed exploration route",
+        }),
+        createQuestGraphEdge({
+            sourceId: anotherNodeId,
+            targetId: shamelessNodeId,
+            edgeType: "optional-branch",
+            style: "dashed",
+            label: "reviewed exploration route",
+        }),
+        createQuestGraphEdge({
+            sourceId: horseNodeId,
+            targetId: meridianNodeId,
+            edgeType: "related-route",
+            style: "dashed",
+            label: "Jianghu Legacy detour on the road home",
+        }),
+        createQuestGraphEdge({
+            sourceId: horseNodeId,
+            targetId: stillShoreNodeId,
+            edgeType: "campaign-chain",
+            style: "dashed",
+            label: "optional campaign during main quest",
+        }),
+    );
+
+    return createFlowchartDefinition({
         id: "progression-qinghe-onboarding-route",
         title: "Qinghe onboarding route",
         kind: "progression" as const,
@@ -215,20 +504,36 @@ function buildQingheProgressionFlowchartDefinition(questPack: QuestPack, storyli
             finale.id,
             stillShore.id,
         ]),
-        mermaid: lines.join("\n"),
-    };
+        modules: buildQingheProgressionModules({
+            storylineId: storyline.id,
+            anotherNewWingId: anotherNewWing.id,
+            whiteBirdId: whiteBird.id,
+            shamelessId: shameless.id,
+            horseNeighsId: horseNeighs.id,
+            meridianTouchId: meridianTouch.id,
+            dustMirrorId: dustMirror.id,
+            finaleId: finale.id,
+            stillShoreId: stillShore.id,
+            bodhiSeaId: bodhiSea?.id,
+            gleamingAbyssId: gleamingAbyss?.id,
+            palaceOfAnnalsId: palaceOfAnnals?.id,
+            blissfulRetreatId: blissfulRetreat?.id,
+            haloPeakId: haloPeak?.id,
+        }),
+        graph,
+    });
 }
 
 function getStorylineBranchPresentation(quest: QuestEntry) {
     switch (quest.questType) {
         case "campaign":
-            return { className: "campaign", label: "Campaign side quest" };
+            return { nodeType: "campaign" as const, label: "Campaign side quest" };
         case "exploration":
-            return { className: "opportunity", label: "Exploration" };
+            return { nodeType: "opportunity" as const, label: "Exploration" };
         case "jianghu-legacy":
-            return { className: "legacy", label: "Jianghu Legacy" };
+            return { nodeType: "legacy" as const, label: "Jianghu Legacy" };
         default:
-            return { className: "opportunity", label: formatDisplayLabel(quest.questType) };
+            return { nodeType: "opportunity" as const, label: formatDisplayLabel(quest.questType) };
     }
 }
 
@@ -288,24 +593,52 @@ function buildStorylineFlowchartDefinition(storylinePack: StorylinePack, questPa
     const regionId = storyline.regionIds[0] ?? "unknown-region";
     const regionNodeId = toNodeId("region", regionId);
     const storylineNodeId = toNodeId("storyline", storyline.id);
-    const lines = ["flowchart TD"];
+    const graph = createQuestGraphDefinition();
 
-    appendFlowchartTheme(lines);
-    lines.push(`    ${regionNodeId}["Region<br/>${escapeMermaidText(formatDisplayLabel(regionId))}"]:::region`);
-    lines.push(
-        `    ${storylineNodeId}["${escapeMermaidText(storyline.chapterLabel)}<br/>${escapeMermaidText(storyline.title)}"]:::storyline`,
+    graph.nodes.push(
+        createQuestGraphNode({
+            id: regionNodeId,
+            nodeType: "region",
+            lines: ["Region", formatDisplayLabel(regionId)],
+            entryId: regionId,
+        }),
+        createQuestGraphNode({
+            id: storylineNodeId,
+            nodeType: "storyline",
+            lines: [storyline.chapterLabel, storyline.title],
+            entryId: storyline.id,
+        }),
     );
-    lines.push(`    ${regionNodeId} --> ${storylineNodeId}`);
+
+    graph.edges.push(
+        createQuestGraphEdge({ sourceId: regionNodeId, targetId: storylineNodeId, edgeType: "main-path", style: "solid" }),
+    );
 
     quests.forEach((quest, index) => {
         const nodeId = toNodeId("quest", quest.id);
-        lines.push(`    ${nodeId}["${escapeMermaidText(quest.title)}"]:::main`);
+        graph.nodes.push(
+            createQuestGraphNode({ id: nodeId, nodeType: "main", lines: [quest.title], entryId: quest.id }),
+        );
 
         if (index === 0) {
-            lines.push(`    ${storylineNodeId} --> ${nodeId}`);
+            graph.edges.push(
+                createQuestGraphEdge({
+                    sourceId: storylineNodeId,
+                    targetId: nodeId,
+                    edgeType: "main-path",
+                    style: "solid",
+                }),
+            );
         } else {
             const previousNodeId = toNodeId("quest", quests[index - 1].id);
-            lines.push(`    ${previousNodeId} --> ${nodeId}`);
+            graph.edges.push(
+                createQuestGraphEdge({
+                    sourceId: previousNodeId,
+                    targetId: nodeId,
+                    edgeType: "main-path",
+                    style: "solid",
+                }),
+            );
         }
     });
 
@@ -313,11 +646,26 @@ function buildStorylineFlowchartDefinition(storylinePack: StorylinePack, questPa
         const presentation = getStorylineBranchPresentation(quest);
         const nodeId = toNodeId("campaign", quest.id);
         const anchorNodeId = toNodeId("quest", anchorQuestId ?? storyline.questIds[storyline.questIds.length - 1] ?? storyline.id);
-        lines.push(`    ${nodeId}["${escapeMermaidText(quest.title)}<br/>(${escapeMermaidText(presentation.label)})"]:::${presentation.className}`);
-        lines.push(`    ${anchorNodeId} -. optional .-> ${nodeId}`);
+        graph.nodes.push(
+            createQuestGraphNode({
+                id: nodeId,
+                nodeType: presentation.nodeType as QuestGraphNodeType,
+                lines: [quest.title, `(${presentation.label})`],
+                entryId: quest.id,
+            }),
+        );
+        graph.edges.push(
+            createQuestGraphEdge({
+                sourceId: anchorNodeId,
+                targetId: nodeId,
+                edgeType: "optional-branch",
+                style: "dashed",
+                label: "optional",
+            }),
+        );
     });
 
-    return {
+    return createFlowchartDefinition({
         id: `${storyline.id}-flowchart`,
         title: `${storyline.chapterLabel} flowchart`,
         kind: "storyline" as const,
@@ -332,8 +680,8 @@ function buildStorylineFlowchartDefinition(storylinePack: StorylinePack, questPa
             ...storyline.questIds,
             ...optionalBranches.map((branch) => branch.quest.id),
         ]),
-        mermaid: lines.join("\n"),
-    };
+        graph,
+    });
 }
 
 function buildCampaignRegionFlowchartDefinitions(regionPack: RegionPack, storylinePack: StorylinePack, questPack: QuestPack) {
@@ -352,16 +700,34 @@ function buildCampaignRegionFlowchartDefinitions(regionPack: RegionPack, storyli
             const storyline = storylinePack.entries.find((entry) => entry.regionIds.includes(region.id)) ?? null;
             const regionNodeId = toNodeId("region", region.id);
             const storylineNodeId = storyline ? toNodeId("storyline", storyline.id) : null;
-            const lines = ["flowchart TD"];
+            const graph = createQuestGraphDefinition();
 
-            appendFlowchartTheme(lines);
-            lines.push(`    ${regionNodeId}["Region<br/>${escapeMermaidText(region.title)}"]:::region`);
+            graph.nodes.push(
+                createQuestGraphNode({
+                    id: regionNodeId,
+                    nodeType: "region",
+                    lines: ["Region", region.title],
+                    entryId: region.id,
+                }),
+            );
 
             if (storyline && storylineNodeId) {
-                lines.push(
-                    `    ${storylineNodeId}["${escapeMermaidText(storyline.chapterLabel)}<br/>${escapeMermaidText(storyline.title)}"]:::storyline`,
+                graph.nodes.push(
+                    createQuestGraphNode({
+                        id: storylineNodeId,
+                        nodeType: "storyline",
+                        lines: [storyline.chapterLabel, storyline.title],
+                        entryId: storyline.id,
+                    }),
                 );
-                lines.push(`    ${regionNodeId} --> ${storylineNodeId}`);
+                graph.edges.push(
+                    createQuestGraphEdge({
+                        sourceId: regionNodeId,
+                        targetId: storylineNodeId,
+                        edgeType: "main-path",
+                        style: "solid",
+                    }),
+                );
             }
 
             const anchorQuestIds = [...new Set(campaignQuests.flatMap((quest) => [...quest.prerequisiteQuestIds, ...quest.relatedEntryIds]))]
@@ -370,12 +736,30 @@ function buildCampaignRegionFlowchartDefinitions(regionPack: RegionPack, storyli
 
             anchorQuestIds.forEach((quest) => {
                 const nodeId = toNodeId("anchor", quest.id);
-                lines.push(`    ${nodeId}["${escapeMermaidText(quest.title)}"]:::main`);
+                graph.nodes.push(
+                    createQuestGraphNode({ id: nodeId, nodeType: "main", lines: [quest.title], entryId: quest.id }),
+                );
 
                 if (storylineNodeId) {
-                    lines.push(`    ${storylineNodeId} -. anchor .-> ${nodeId}`);
+                    graph.edges.push(
+                        createQuestGraphEdge({
+                            sourceId: storylineNodeId,
+                            targetId: nodeId,
+                            edgeType: "anchor",
+                            style: "dashed",
+                            label: "anchor",
+                        }),
+                    );
                 } else {
-                    lines.push(`    ${regionNodeId} -. anchor .-> ${nodeId}`);
+                    graph.edges.push(
+                        createQuestGraphEdge({
+                            sourceId: regionNodeId,
+                            targetId: nodeId,
+                            edgeType: "anchor",
+                            style: "dashed",
+                            label: "anchor",
+                        }),
+                    );
                 }
             });
 
@@ -389,11 +773,26 @@ function buildCampaignRegionFlowchartDefinitions(regionPack: RegionPack, storyli
                     ? toNodeId("anchor", anchorQuest.id)
                     : (storylineNodeId ?? regionNodeId);
 
-                lines.push(`    ${nodeId}["${escapeMermaidText(quest.title)}<br/>(Campaign side quest)"]:::campaign`);
-                lines.push(`    ${sourceNodeId} -. optional .-> ${nodeId}`);
+                graph.nodes.push(
+                    createQuestGraphNode({
+                        id: nodeId,
+                        nodeType: "campaign",
+                        lines: [quest.title, "(Campaign side quest)"],
+                        entryId: quest.id,
+                    }),
+                );
+                graph.edges.push(
+                    createQuestGraphEdge({
+                        sourceId: sourceNodeId,
+                        targetId: nodeId,
+                        edgeType: "optional-branch",
+                        style: "dashed",
+                        label: "optional",
+                    }),
+                );
             });
 
-            return {
+            return createFlowchartDefinition({
                 id: `campaign-branches-${region.id}`,
                 title: `${region.title} campaign side-quest branches`,
                 kind: "campaign" as const,
@@ -406,8 +805,41 @@ function buildCampaignRegionFlowchartDefinitions(regionPack: RegionPack, storyli
                     ...anchorQuestIds.map((quest) => quest.id),
                     ...campaignQuests.map((quest) => quest.id),
                 ]),
-                mermaid: lines.join("\n"),
-            };
+                modules:
+                    region.id === "qinghe"
+                        ? (() => {
+                              const horseNeighs = questById.get("quest-a-horse-neighs-in-the-forest");
+                              const stillShore = questById.get("quest-still-shore");
+                              const bodhiSea = questById.get("quest-bodhi-sea");
+                              const gleamingAbyss = questById.get("quest-gleaming-abyss");
+                              const palaceOfAnnals = questById.get("quest-palace-of-annals");
+                              const finale = questById.get("quest-for-whom-does-he-return");
+                              const blissfulRetreat = questById.get("quest-blissful-retreat");
+                              const haloPeak = questById.get("quest-halo-peak");
+
+                              return horseNeighs &&
+                                  stillShore &&
+                                  bodhiSea &&
+                                  gleamingAbyss &&
+                                  palaceOfAnnals &&
+                                  finale &&
+                                  blissfulRetreat &&
+                                  haloPeak
+                                  ? buildQingheCampaignModules({
+                                        horseNeighsId: horseNeighs.id,
+                                        stillShoreId: stillShore.id,
+                                        bodhiSeaId: bodhiSea.id,
+                                        gleamingAbyssId: gleamingAbyss.id,
+                                        palaceOfAnnalsId: palaceOfAnnals.id,
+                                        finaleId: finale.id,
+                                        blissfulRetreatId: blissfulRetreat.id,
+                                        haloPeakId: haloPeak.id,
+                                    })
+                                  : [];
+                          })()
+                        : [],
+                graph,
+            });
         })
         .filter((definition): definition is QuestFlowchartDefinition => Boolean(definition));
 }

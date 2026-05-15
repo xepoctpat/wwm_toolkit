@@ -14,7 +14,7 @@ This file is the living execution tracker for the broader `WWM Toolkit` roadmap.
 | --- | --- | --- | --- |
 | Phase 0 — NPC vertical slice | completed | Deliver a working prototype around NPC routing, archetypes, source notes, and map overlays. | Current root `legacy-prototype.html` app remains the working prototype. |
 | Phase 1 — Hybrid foundation | in progress | Introduce Vite + TypeScript, typed schemas, Python-ready data tooling, and non-destructive migration structure. | `app/` scaffold, schemas, tests, Python pipeline stubs, and the IndexedDB migration bridge now exist. |
-| Phase 2 — Codex expansion | in progress | Add quests, storylines, regions, factions, items, and cross-linked search. | First reviewed seed content now exists for `regions`, `quests`, and `storylines`, and the modular app now exposes codex search plus a Mermaid-backed flowchart pilot that now includes both a Qinghe-first route and a region/level gate overview while keeping literal encounters separate from first-class exploration, Jianghu Legacy, and campaign-side optional-content layers. The current UI now leads with that Qinghe slice instead of leading with migration scaffolding. |
+| Phase 2 — Codex expansion | in progress | Add quests, storylines, regions, factions, items, and cross-linked search. | First reviewed seed content now exists for `regions`, `quests`, and `storylines`, and the modular app now exposes codex search plus a renderer-neutral quest graph rendered through a vanilla HTML/SVG graph prototype with Mermaid fallback. The current UI now leads with a Qinghe-first route workbench, compact chart filters, and explicit Qinghe route modules while still keeping literal encounters separate from exploration, Jianghu Legacy, and campaign-side optional-content layers. |
 | Phase 3 — Offline toolkit v1 | planned | Add backups, calibration, route builder, presets, and checklist workflows. | Depends on content graph and IndexedDB migration. |
 | Phase 4 — Distribution layer | planned | PWA packaging, deployment pipeline, and better resilience. | Can start once the modular app is the primary surface. |
 | Phase 5 — Content operations | planned | Mature validation, build scripts, versioning, and contributor workflow. | Python pipeline will expand here. |
@@ -22,23 +22,27 @@ This file is the living execution tracker for the broader `WWM Toolkit` roadmap.
 
 ## Current strategic checkpoint — 2026-05-15
 
-The best next move is **Assembly Gate 1**: make the modular app easier to own before adding another large content slice.
+The repo is now at a **stable Qinghe modularity checkpoint**.
+
+The best next move is **Assembly Gate 1B**: keep using Qinghe as the proving ground for modular structure before broadening the reviewed content surface again.
 
 Current reviewed surface:
 
 - `50` codex-search entries: `3` regions, `31` quests, `3` storylines, and `13` sources
 - `8` current flowchart definitions covering Qinghe onboarding, region/level gates, three storyline spines, and three campaign-region charts
 - Qinghe optional exploration and Jianghu Legacy routes are first-class quest entries, while literal `Encounter` activities remain intentionally deferred
-- the current flowchart renderer is Mermaid-backed, but the next chart step should be a renderer-neutral graph model with Mermaid as the compatibility adapter
+- the quest graph is now renderer-neutral, with Mermaid kept as the compatibility adapter and the vanilla HTML/SVG graph prototype used as the default chart surface
+- the flowchart workspace now includes compact chart filters plus explicit Qinghe route modules for the main spine, exploration loop, Meridian detour, and the current campaign ladder
+- linked Qinghe modules can now move the workspace between related charts so the campaign ladder, late-Chapter 1 link, and route loops are visible as named structures instead of loose edge trivia
 
 Strategic next actions:
 
-1. split `renderFoundationApp.ts` into feature-owned modules
-2. add a clear modular-app shell / top-level navigation
-3. separate quest graph data from Mermaid text generation
-4. evaluate the local `understand-anything` repo as a graph-rendering reference, not as an immediate local dependency
-5. freeze the content intake contract before choosing the next expansion slice
-6. pick exactly one content expansion lane afterward: Kaifeng/Hexi non-campaign optional routes **or** literal encounter normalization
+1. split the graph/filter/module UI out of `renderFoundationApp.ts` into feature-owned modules so the current checkpoint stops depending on one giant render file
+2. deepen the Qinghe slice before broad region expansion by adding more subregion, landmark, gate, and optional-route structure to prove the module model against denser local content
+3. generalize the current Qinghe route-module pattern into reusable builders instead of leaving it as a one-region special case inside `questFlowcharts.ts`
+4. keep Mermaid as the fallback renderer, but treat the renderer-neutral graph model plus module metadata as the canonical chart surface
+5. freeze the content intake contract for Qinghe expansion so optional-route, campaign, Jianghu Legacy, and literal-encounter layers keep distinct rules
+6. only after the Qinghe modular proof holds, choose the next expansion lane: Kaifeng/Hexi non-campaign optional routes **or** literal encounter normalization
 
 ## Phase 1 deliverables
 
@@ -66,14 +70,17 @@ Strategic next actions:
 - Promoted `White Bird Shooting`, `The Shameless`, and `Meridian Touch` into first-class Qinghe quest entries with explicit `exploration` / `jianghu-legacy` typing, region detail links, and flowchart navigation that still keeps literal encounters separate
 - Reordered the modular app into a Qinghe-first route surface with quick actions, a default Qinghe onboarding chart, and lower placement for migration scaffolding/persistence panels
 - Expanded the reviewed campaign seed from isolated examples into the full currently reviewed Qinghe and Kaifeng campaign ladders, plus the current Game8-backed Hexi campaign slice, with codex links and region/campaign flowcharts kept in sync
+- Extracted a renderer-neutral quest graph model, added a Mermaid compatibility adapter, and made the vanilla HTML/SVG graph prototype the default chart surface while keeping Mermaid available as a fallback
+- Reworked the graph workspace into a graph-first surface with wider stage usage, compact chart filters, route-module cards, and linked-chart actions that make Qinghe loops and campaign ladders explicit
+- Added a dedicated Qinghe modularity checkpoint handoff so the next implementation pass can keep Qinghe as the proving ground instead of broadening scope too quickly
 
 ### Remaining
 
-- make the modular app the clear primary surface by splitting `renderFoundationApp.ts` into feature-focused modules and adding a top-level shell/navigation
-- extract a renderer-neutral quest graph model so Mermaid is no longer the canonical chart data format, then evaluate an `understand-anything`-style renderer from a stable adapter boundary
+- make the modular app the clear primary surface by splitting `renderFoundationApp.ts` into feature-focused modules and giving the current graph/filter/module workbench clear ownership boundaries
+- generalize the new route-module layer so Qinghe logic becomes reusable structure rather than permanent inline chart-specific code
 - freeze a documented content intake contract for new reviewed slices so optional-content taxonomies and evidence rules stop drifting between expansions
 - add additional Python validation scripts
-- expand the reviewed region/quest/storyline seed beyond the current Qinghe/Kaifeng campaign ladders, Game8-backed Hexi campaign slice, and Qinghe optional-route coverage
+- expand the reviewed region/quest/storyline seed by deepening Qinghe first (subregions, landmarks, more linked route windows, and eventually encounter placement) before broadening the next region slice
 - deepen the codex search and flowchart experience with keyboard navigation, clearer result explanations, tighter sync between guided quick actions and deeper codex/flowchart navigation, later content domains such as factions, items, literal encounters, and vendors, and more progression-aware route slices beyond early Qinghe
 
 ## Documentation links
@@ -81,6 +88,7 @@ Strategic next actions:
 - Full product scope: `docs/roadmaps/wwm-toolkit-full-product-plan.md`
 - Assembly roadmap: `docs/roadmaps/wwm-toolkit-assembly-roadmap.md`
 - Phase A handoff: `docs/roadmaps/wwm-toolkit-phase-a-handoff.md`
+- Qinghe modularity handoff: `docs/roadmaps/wwm-toolkit-qinghe-modularity-checkpoint-handoff.md`
 - Graph rendering strategy: `docs/roadmaps/wwm-toolkit-graph-rendering-strategy.md`
 - Documentation map: `docs/roadmaps/wwm-toolkit-documentation-map.md`
 - Historical log: `docs/roadmaps/wwm-toolkit-history-log.md`

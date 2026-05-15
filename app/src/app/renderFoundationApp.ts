@@ -12,7 +12,10 @@ import {
     buildQuestFlowchartDefinitions,
     getQuestFlowchartDefinitionById,
     type QuestFlowchartDefinition,
+    type QuestFlowchartKind,
+    type QuestFlowchartModule,
 } from "../lib/flowcharts/questFlowcharts";
+import { renderQuestGraphDefinitionAsHtml } from "../lib/flowcharts/renderers/vanillaQuestFlowchartRenderer";
 import {
     buildCodexSearchDocuments,
     getCodexDocumentById,
@@ -47,6 +50,7 @@ const flowchartDefinitions = buildQuestFlowchartDefinitions({
     questPack,
     storylinePack,
 });
+const flowchartRegionFilterOptions = [...new Set(flowchartDefinitions.flatMap((definition) => definition.regionIds))];
 
 let mermaidInitialized = false;
 let flowchartRenderVersion = 0;
@@ -62,7 +66,13 @@ interface CodexUiState {
 
 interface FlowchartUiState {
     selectedDefinitionId: string | null;
+    rendererMode: FlowchartRendererMode;
+    selectorKind: QuestFlowchartKind | "all";
+    selectorRegionId: string | "all";
+    activeModuleId: string | null;
 }
+
+type FlowchartRendererMode = "graph" | "mermaid";
 
 type QingheGuideAction =
     | "qinghe-overview"
@@ -190,6 +200,10 @@ function createInitialFlowchartUiState(): FlowchartUiState {
             getQuestFlowchartDefinitionById(flowchartDefinitions, "progression-qinghe-onboarding-route")?.id ??
             flowchartDefinitions[0]?.id ??
             null,
+        rendererMode: "graph",
+        selectorKind: "progression",
+        selectorRegionId: "qinghe",
+        activeModuleId: null,
     };
 }
 
@@ -216,6 +230,7 @@ function syncCodexStateToFlowchartSelection(codexState: CodexUiState, flowchartS
         return;
     }
 
+    flowchartState.activeModuleId = null;
     applyCodexSyncTarget(codexState, getCodexSyncTargetForFlowchartDefinition(definition, codexDocuments));
 }
 
@@ -232,21 +247,41 @@ function syncFlowchartStateToCodexSelection(codexState: CodexUiState, flowchartS
     );
 
     if (preferredDefinitionId) {
+        const preferredDefinition = getQuestFlowchartDefinitionById(flowchartDefinitions, preferredDefinitionId);
+
         flowchartState.selectedDefinitionId = preferredDefinitionId;
+
+        if (preferredDefinition) {
+            syncFlowchartFiltersToDefinition(flowchartState, preferredDefinition);
+        }
+
+        flowchartState.activeModuleId = null;
     }
 }
 
 function getFlowchartViewModel(flowchartState: FlowchartUiState) {
+    const filteredDefinitions = flowchartDefinitions.filter((definition) => {
+        const matchesKind = flowchartState.selectorKind === "all" || definition.kind === flowchartState.selectorKind;
+        const matchesRegion =
+            flowchartState.selectorRegionId === "all" || definition.regionIds.includes(flowchartState.selectorRegionId);
+
+        return matchesKind && matchesRegion;
+    });
     const selectedDefinition =
-        getQuestFlowchartDefinitionById(flowchartDefinitions, flowchartState.selectedDefinitionId) ??
-        flowchartDefinitions[0] ??
+        getQuestFlowchartDefinitionById(filteredDefinitions, flowchartState.selectedDefinitionId) ??
+        filteredDefinitions[0] ??
         null;
+    const activeModule = selectedDefinition?.modules?.find((module) => module.id === flowchartState.activeModuleId) ?? null;
 
     flowchartState.selectedDefinitionId = selectedDefinition?.id ?? null;
+    flowchartState.activeModuleId = activeModule?.id ?? null;
 
     return {
         definitions: flowchartDefinitions,
+        filteredDefinitions,
         selectedDefinition,
+        activeModule,
+        hasActiveFilters: flowchartState.selectorKind !== "all" || flowchartState.selectorRegionId !== "all",
     };
 }
 
@@ -1007,12 +1042,95 @@ function formatFlowchartKindLabel(kind: QuestFlowchartDefinition["kind"]) {
     }
 }
 
-function renderFlowchartSelectorCards(flowchartState: FlowchartUiState) {
-    return flowchartDefinitions
+function formatFlowchartModuleToneLabel(tone: QuestFlowchartModule["tone"]) {
+    switch (tone) {
+        case "main":
+            return "Main spine";
+        case "exploration":
+            return "Exploration loop";
+        case "legacy":
+            return "Legacy detour";
+        case "campaign":
+            return "Campaign ladder";
+        case "gate":
+            return "Gate / cross-link";
+    }
+}
+
+function renderFlowchartFilterButtons(flowchartState: FlowchartUiState) {
+    const kindOptions: Array<{ id: QuestFlowchartKind | "all"; label: string }> = [
+        { id: "all", label: "All charts" },
+        { id: "progression", label: "Progression" },
+        { id: "storyline", label: "Storylines" },
+        { id: "campaign", label: "Campaigns" },
+    ];
+    const regionOptions: Array<{ id: string | "all"; label: string }> = [
+        { id: "all", label: "All regions" },
+        ...flowchartRegionFilterOptions.map((regionId) => ({
+            id: regionId,
+            label: formatDisplayLabel(regionId),
+        })),
+    ];
+
+    return `
+        <div class="flowchart-filter-stack">
+            <div class="flowchart-filter-group" role="group" aria-label="Filter charts by type">
+                <span class="flowchart-filter-label">Chart type</span>
+                <div class="flowchart-filter-buttons">
+                    ${kindOptions
+                        .map(
+                            (option) => `
+                                <button
+                                    class="action-button action-button--secondary flowchart-filter-button ${flowchartState.selectorKind === option.id ? "is-active" : ""}"
+                                    type="button"
+                                    aria-pressed="${flowchartState.selectorKind === option.id ? "true" : "false"}"
+                                    data-flowchart-filter-kind="${option.id}"
+                                >
+                                    ${escapeHtml(option.label)}
+                                </button>
+                            `,
+                        )
+                        .join("")}
+                </div>
+            </div>
+
+            <div class="flowchart-filter-group" role="group" aria-label="Filter charts by region">
+                <span class="flowchart-filter-label">Region</span>
+                <div class="flowchart-filter-buttons">
+                    ${regionOptions
+                        .map(
+                            (option) => `
+                                <button
+                                    class="action-button action-button--secondary flowchart-filter-button ${flowchartState.selectorRegionId === option.id ? "is-active" : ""}"
+                                    type="button"
+                                    aria-pressed="${flowchartState.selectorRegionId === option.id ? "true" : "false"}"
+                                    data-flowchart-filter-region="${option.id}"
+                                >
+                                    ${escapeHtml(option.label)}
+                                </button>
+                            `,
+                        )
+                        .join("")}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderFlowchartSelectorCards(definitions: QuestFlowchartDefinition[], flowchartState: FlowchartUiState) {
+    if (definitions.length === 0) {
+        return `
+            <div class="empty-state">
+                No charts match the current selector filters yet. Try broadening the chart type or region scope.
+            </div>
+        `;
+    }
+
+    return definitions
         .map(
             (definition) => `
                 <button
-                    class="flowchart-card ${flowchartState.selectedDefinitionId === definition.id ? "is-active" : ""}"
+                    class="flowchart-card flowchart-card--compact ${flowchartState.selectedDefinitionId === definition.id ? "is-active" : ""}"
                     type="button"
                     aria-pressed="${flowchartState.selectedDefinitionId === definition.id ? "true" : "false"}"
                     data-flowchart-id="${escapeHtml(definition.id)}"
@@ -1029,70 +1147,199 @@ function renderFlowchartSelectorCards(flowchartState: FlowchartUiState) {
         .join("");
 }
 
+function renderFlowchartModuleCards(
+    definition: QuestFlowchartDefinition,
+    flowchartState: FlowchartUiState,
+) {
+    const modules = definition.modules ?? [];
+
+    if (modules.length === 0) {
+        return "";
+    }
+
+    return `
+        <section class="detail-section flowchart-module-section">
+            <h3 class="detail-section__title">Route modules</h3>
+            <div class="route-module-grid">
+                ${modules
+                    .map((module) => {
+                        const relatedDefinition = module.relatedDefinitionId
+                            ? getQuestFlowchartDefinitionById(flowchartDefinitions, module.relatedDefinitionId)
+                            : null;
+                        const actionLabel =
+                            relatedDefinition && relatedDefinition.id !== definition.id ? "Open linked chart" : "Focus module";
+
+                        return `
+                            <article class="route-module-card ${flowchartState.activeModuleId === module.id ? "is-active" : ""}">
+                                <div class="result-card__meta">
+                                    <span class="meta-pill">${escapeHtml(formatFlowchartModuleToneLabel(module.tone))}</span>
+                                    ${relatedDefinition && relatedDefinition.id !== definition.id ? `<span class="meta-pill">${escapeHtml(relatedDefinition.title)}</span>` : ""}
+                                </div>
+                                <h4>${escapeHtml(module.title)}</h4>
+                                <p>${escapeHtml(module.summary)}</p>
+                                ${renderGuideLinkList(module.linkedEntryIds)}
+                                <div class="button-row button-row--compact route-module-actions">
+                                    <button
+                                        class="action-button action-button--secondary"
+                                        type="button"
+                                        data-flowchart-module-id="${escapeHtml(module.id)}"
+                                    >
+                                        ${escapeHtml(actionLabel)}
+                                    </button>
+                                </div>
+                            </article>
+                        `;
+                    })
+                    .join("")}
+            </div>
+        </section>
+    `;
+}
+
+function renderFlowchartRendererButtons(flowchartState: FlowchartUiState) {
+    const renderers: Array<{ id: FlowchartRendererMode; label: string }> = [
+        { id: "graph", label: "Graph prototype" },
+        { id: "mermaid", label: "Mermaid fallback" },
+    ];
+
+    return renderers
+        .map(
+            (renderer) => `
+                <button
+                    class="action-button action-button--secondary flowchart-renderer-button ${flowchartState.rendererMode === renderer.id ? "is-active" : ""}"
+                    type="button"
+                    aria-pressed="${flowchartState.rendererMode === renderer.id ? "true" : "false"}"
+                    data-flowchart-renderer="${renderer.id}"
+                >
+                    ${escapeHtml(renderer.label)}
+                </button>
+            `,
+        )
+        .join("");
+}
+
+function renderFlowchartGraphLegend() {
+    return `
+        <div class="graph-legend" aria-label="Graph legend">
+            <span class="graph-legend__item">
+                <span class="graph-legend__line graph-legend__line--main-path"></span>
+                Main spine
+            </span>
+            <span class="graph-legend__item">
+                <span class="graph-legend__line graph-legend__line--gate"></span>
+                Gates / progression
+            </span>
+            <span class="graph-legend__item">
+                <span class="graph-legend__line graph-legend__line--optional"></span>
+                Optional / detour
+            </span>
+            <span class="graph-legend__item">
+                <span class="graph-legend__swatch graph-legend__swatch--exploration"></span>
+                Left lane: exploration
+            </span>
+            <span class="graph-legend__item">
+                <span class="graph-legend__swatch graph-legend__swatch--detour"></span>
+                Right lane: legacy + campaign
+            </span>
+        </div>
+    `;
+}
+
 function renderFlowchartSection(flowchartState: FlowchartUiState) {
     const viewModel = getFlowchartViewModel(flowchartState);
     const definition = viewModel.selectedDefinition;
+    const renderingLabel =
+        flowchartState.rendererMode === "graph" ? "Vanilla graph prototype (HTML/SVG)" : "Mermaid SVG";
+    const rendererHint =
+        flowchartState.rendererMode === "graph"
+            ? "Primary route stays centered while detours spread outward. Click a branch node to reveal just the relevant connection label."
+            : "Mermaid remains the compatibility fallback while the graph prototype layout is iterated.";
 
     if (!definition) {
         return "";
     }
 
     return `
-        <section class="panel">
+        <section class="panel panel--flowchart">
             <div class="panel__header">
                 <div>
                     <p class="eyebrow">Flowchart pilot</p>
-                    <h2>Storyline and side-quest deep-dive scaffolding</h2>
+                    <h2>Open the route graph before the long-form notes</h2>
                 </div>
-                <span class="pill">${escapeHtml(String(viewModel.definitions.length))} chart${viewModel.definitions.length === 1 ? "" : "s"}</span>
+                <span class="pill">${escapeHtml(String(viewModel.filteredDefinitions.length))}${viewModel.hasActiveFilters ? ` / ${escapeHtml(String(viewModel.definitions.length))}` : ""} chart${viewModel.filteredDefinitions.length === 1 ? "" : "s"}</span>
             </div>
             <p>
-                The reviewed quest graph is now renderable as flowcharts. Progression charts start in Qinghe because the game does too, then layer in
-                published region/level gates, first-class exploration routes, Jianghu Legacy / mystic-art unlocks, and reviewed campaign routes without
-                pretending every literal encounter marker is already normalized into the codex.
+                Start with the graph itself: progression charts begin in Qinghe, then fold in reviewed gates, exploration routes,
+                Jianghu Legacy / mystic-art detours, and the current campaign slices without pretending the dataset is already a complete walkthrough atlas.
             </p>
             <div class="callout callout--info">
-                Selecting a chart now steers the codex pane below, and selecting a codex entry can pull the closest chart back into view. Arrow keys also work across the chart cards.
+                ${flowchartState.rendererMode === "graph"
+                    ? "Graph prototype mode is active: click nodes to sync the codex without going through Mermaid, and use the toggle below to compare it against the current fallback renderer."
+                    : "Mermaid fallback mode is active. Selecting a chart steers the codex pane below, and selecting a codex entry can pull the closest chart back into view."}
             </div>
 
             <div class="flowchart-layout">
+                ${renderFlowchartFilterButtons(flowchartState)}
+
                 <div class="flowchart-selector">
-                    ${renderFlowchartSelectorCards(flowchartState)}
+                    ${renderFlowchartSelectorCards(viewModel.filteredDefinitions, flowchartState)}
                 </div>
 
                 <article class="detail-panel__body flowchart-view">
-                    <div class="result-card__meta">
-                        <span class="meta-pill">${escapeHtml(`${formatFlowchartKindLabel(definition.kind)} chart`)}</span>
-                        <span class="meta-pill">${escapeHtml(String(definition.linkedEntryIds.length))} linked entr${definition.linkedEntryIds.length === 1 ? "y" : "ies"}</span>
+                    <div class="flowchart-view__header">
+                        <div class="flowchart-view__summary">
+                            <div class="result-card__meta">
+                                <span class="meta-pill">${escapeHtml(`${formatFlowchartKindLabel(definition.kind)} chart`)}</span>
+                                <span class="meta-pill">${escapeHtml(String(definition.linkedEntryIds.length))} linked entr${definition.linkedEntryIds.length === 1 ? "y" : "ies"}</span>
+                            </div>
+                            <h3>${escapeHtml(definition.title)}</h3>
+                            <p>${escapeHtml(definition.summary)}</p>
+                        </div>
+
+                        <div class="flowchart-view__controls">
+                            <dl class="detail-list flowchart-detail-list">
+                                <div>
+                                    <dt>Regions</dt>
+                                    <dd>${escapeHtml(formatListDisplay(definition.regionIds))}</dd>
+                                </div>
+                                <div>
+                                    <dt>Linked entries</dt>
+                                    <dd>${escapeHtml(String(definition.linkedEntryIds.length))}</dd>
+                                </div>
+                                <div>
+                                    <dt>Rendering</dt>
+                                    <dd>${escapeHtml(renderingLabel)}</dd>
+                                </div>
+                            </dl>
+
+                            <div class="button-row button-row--compact flowchart-renderer-row">
+                                <span class="muted-inline">Renderer spike</span>
+                                ${renderFlowchartRendererButtons(flowchartState)}
+                            </div>
+
+                            <p class="muted-inline flowchart-renderer-hint">${escapeHtml(rendererHint)}</p>
+
+                            ${flowchartState.rendererMode === "graph" ? renderFlowchartGraphLegend() : ""}
+                        </div>
                     </div>
-                    <h3>${escapeHtml(definition.title)}</h3>
-                    <p>${escapeHtml(definition.summary)}</p>
 
-                    <dl class="detail-list">
-                        <div>
-                            <dt>Regions</dt>
-                            <dd>${escapeHtml(formatListDisplay(definition.regionIds))}</dd>
-                        </div>
-                        <div>
-                            <dt>Linked entries</dt>
-                            <dd>${escapeHtml(String(definition.linkedEntryIds.length))}</dd>
-                        </div>
-                        <div>
-                            <dt>Rendering</dt>
-                            <dd>Mermaid SVG</dd>
-                        </div>
-                    </dl>
-
-                    ${renderCodexReferenceSection("Linked codex entries", definition.linkedEntryIds)}
-
-                    <div class="flowchart-diagram" data-flowchart-render-target>
+                    <div
+                        class="flowchart-diagram ${flowchartState.rendererMode === "graph" ? "flowchart-diagram--graph" : ""}"
+                        data-flowchart-render-target
+                        data-flowchart-renderer-mode="${flowchartState.rendererMode}"
+                    >
                         <p class="muted-inline">Rendering flowchart…</p>
                     </div>
 
-                    <details class="flowchart-source">
-                        <summary>Mermaid source</summary>
-                        <pre class="code-block">${escapeHtml(definition.mermaid)}</pre>
-                    </details>
+                    <div class="flowchart-support">
+                        ${renderFlowchartModuleCards(definition, flowchartState)}
+                        ${renderCodexReferenceSection("Linked codex entries", definition.linkedEntryIds)}
+
+                        <details class="flowchart-source">
+                            <summary>Mermaid fallback source</summary>
+                            <pre class="code-block">${escapeHtml(definition.mermaid)}</pre>
+                        </details>
+                    </div>
                 </article>
             </div>
         </section>
@@ -1228,24 +1475,58 @@ function renderFoundationMarkup(
     return `
         <div class="shell">
             <header class="hero">
-                <p class="eyebrow">WWM Toolkit foundation</p>
-                <h1>Qinghe-first codex guide in progress</h1>
-                <p class="hero__lead">
-                    The modular app now leads with the reviewed Qinghe opening route, then expands into flowcharts,
-                    search, and source-backed codex navigation for the broader WWM Toolkit migration.
-                </p>
-                <div class="hero__meta">
-                    <span class="pill">Qinghe-first onboarding route</span>
-                    <span class="pill">Mermaid progression charts</span>
-                    <span class="pill">${escapeHtml(getBackendLabel(summary.backend))}</span>
-                    <span class="pill">Real-data verification model</span>
+                <div class="hero__layout">
+                    <div class="hero__content">
+                        <p class="eyebrow">WWM Toolkit foundation</p>
+                        <h1>Graph-first Qinghe codex guide</h1>
+                        <p class="hero__lead">
+                            The foundation now opens on the reviewed route graph instead of burying it under status cards,
+                            then fans out into the Qinghe guide, codex search, and migration bridge for the broader toolkit rewrite.
+                        </p>
+                        <div class="hero__meta">
+                            <span class="pill">Qinghe-first onboarding route</span>
+                            <span class="pill">${escapeHtml(String(flowchartDefinitions.length))} reviewed charts</span>
+                            <span class="pill">${escapeHtml(getBackendLabel(summary.backend))}</span>
+                            <span class="pill">${escapeHtml(String(codexDocuments.length))} indexed codex entries</span>
+                        </div>
+                    </div>
+
+                    <aside class="hero__launchpad">
+                        <p class="eyebrow">Quick start</p>
+                        <h2>Go straight to the graph workbench</h2>
+                        <p>
+                            The graph is now the first-class surface. Jump directly into route structure, then dip into guide context or search when you want supporting detail.
+                        </p>
+                        <div class="button-row hero__actions">
+                            <a class="action-button" href="#flowchart-panel">Jump to flowcharts</a>
+                            <a class="action-button action-button--secondary" href="#qinghe-guide-panel">Jump to Qinghe guide</a>
+                            <a class="action-button action-button--secondary" href="#codex-search-panel">Jump to codex search</a>
+                        </div>
+
+                        <div class="hero__stat-grid">
+                            <article class="hero-stat">
+                                <p class="hero-stat__label">Charts</p>
+                                <p class="hero-stat__value">${escapeHtml(String(flowchartDefinitions.length))}</p>
+                            </article>
+                            <article class="hero-stat">
+                                <p class="hero-stat__label">Codex</p>
+                                <p class="hero-stat__value">${escapeHtml(String(codexDocuments.length))}</p>
+                            </article>
+                            <article class="hero-stat">
+                                <p class="hero-stat__label">Storage</p>
+                                <p class="hero-stat__value hero-stat__value--compact">${escapeHtml(getBackendLabel(summary.backend))}</p>
+                            </article>
+                        </div>
+                    </aside>
                 </div>
             </header>
 
-            ${renderQingheGuideSection()}
-
             <div id="flowchart-panel">
                 ${renderFlowchartSection(flowchartState)}
+            </div>
+
+            <div id="qinghe-guide-panel">
+                ${renderQingheGuideSection()}
             </div>
 
             <div id="codex-search-panel">
@@ -1384,7 +1665,7 @@ async function ensureMermaidInitialized() {
     return mermaid;
 }
 
-async function hydrateFlowchartDiagram(root: Element, flowchartState: FlowchartUiState) {
+async function hydrateFlowchartVisualization(root: Element, codexState: CodexUiState, flowchartState: FlowchartUiState) {
     const renderTarget = root.querySelector<HTMLElement>("[data-flowchart-render-target]");
     const definition = getFlowchartViewModel(flowchartState).selectedDefinition;
 
@@ -1393,6 +1674,18 @@ async function hydrateFlowchartDiagram(root: Element, flowchartState: FlowchartU
     }
 
     const renderVersion = ++flowchartRenderVersion;
+
+    if (flowchartState.rendererMode === "graph") {
+        const computedStyle = globalThis.getComputedStyle(renderTarget);
+        const paddingX = parseFloat(computedStyle.paddingLeft || "0") + parseFloat(computedStyle.paddingRight || "0");
+
+        renderTarget.innerHTML = renderQuestGraphDefinitionAsHtml(definition.graph, {
+            selectedEntryId: codexState.selectedEntryId,
+            minimumWidth: Math.max(renderTarget.clientWidth - paddingX, 0),
+        });
+        return;
+    }
+
     renderTarget.innerHTML = '<p class="muted-inline">Rendering flowchart…</p>';
 
     try {
@@ -1526,6 +1819,57 @@ function attachLinearKeyboardNavigation(buttons: HTMLButtonElement[]) {
     });
 }
 
+function getCodexQuestTypeForFlowchartModuleTone(tone: QuestFlowchartModule["tone"]): CodexQuestType | null {
+    switch (tone) {
+        case "main":
+            return "main";
+        case "exploration":
+            return "exploration";
+        case "legacy":
+            return "jianghu-legacy";
+        case "campaign":
+            return "campaign";
+        default:
+            return null;
+    }
+}
+
+function syncFlowchartFiltersToDefinition(flowchartState: FlowchartUiState, definition: QuestFlowchartDefinition) {
+    flowchartState.selectorKind = definition.kind;
+    flowchartState.selectorRegionId = definition.regionIds.length === 1 ? (definition.regionIds[0] ?? "all") : "all";
+}
+
+function applyFlowchartModuleSelection(
+    module: QuestFlowchartModule,
+    currentDefinition: QuestFlowchartDefinition,
+    codexState: CodexUiState,
+    flowchartState: FlowchartUiState,
+) {
+    const targetDefinition = module.relatedDefinitionId
+        ? getQuestFlowchartDefinitionById(flowchartDefinitions, module.relatedDefinitionId) ?? currentDefinition
+        : currentDefinition;
+    const targetQuestType = getCodexQuestTypeForFlowchartModuleTone(module.tone);
+
+    flowchartState.selectedDefinitionId = targetDefinition.id;
+    flowchartState.activeModuleId = targetDefinition.id === currentDefinition.id ? module.id : null;
+
+    if (targetDefinition.id !== currentDefinition.id) {
+        syncFlowchartFiltersToDefinition(flowchartState, targetDefinition);
+    }
+
+    resetCodexState(codexState);
+    codexState.selectedEntryId = module.focusEntryId;
+
+    if (targetDefinition.regionIds.length === 1) {
+        codexState.regionId = targetDefinition.regionIds[0] ?? "all";
+    }
+
+    if (targetQuestType) {
+        codexState.domain = "quests";
+        codexState.questType = targetQuestType;
+    }
+}
+
 function isTextEntryTarget(target: EventTarget | null) {
     return (
         target instanceof HTMLInputElement ||
@@ -1542,11 +1886,17 @@ function attachFlowchartHandlers(root: Element, codexState: CodexUiState, flowch
         return;
     }
 
+    const activeDefinition = getQuestFlowchartDefinitionById(flowchartDefinitions, flowchartState.selectedDefinitionId);
     const buttons = [...flowchartPanel.querySelectorAll<HTMLButtonElement>("[data-flowchart-id]")];
+    const rendererButtons = [...flowchartPanel.querySelectorAll<HTMLButtonElement>("[data-flowchart-renderer]")];
+    const kindFilterButtons = [...flowchartPanel.querySelectorAll<HTMLButtonElement>("[data-flowchart-filter-kind]")];
+    const regionFilterButtons = [...flowchartPanel.querySelectorAll<HTMLButtonElement>("[data-flowchart-filter-region]")];
+    const moduleButtons = [...flowchartPanel.querySelectorAll<HTMLButtonElement>("[data-flowchart-module-id]")];
 
     buttons.forEach((button) => {
         button.onclick = () => {
             flowchartState.selectedDefinitionId = button.dataset.flowchartId ?? null;
+            flowchartState.activeModuleId = null;
             syncCodexStateToFlowchartSelection(codexState, flowchartState);
             rerenderLinkedPanels(root, codexState, flowchartState, {
                 focusSelector: "[data-flowchart-id].is-active",
@@ -1555,8 +1905,118 @@ function attachFlowchartHandlers(root: Element, codexState: CodexUiState, flowch
         };
     });
 
+    kindFilterButtons.forEach((button) => {
+        button.onclick = () => {
+            const nextKind = button.dataset.flowchartFilterKind as QuestFlowchartKind | "all" | undefined;
+
+            if (!nextKind) {
+                return;
+            }
+
+            const previousSelectedDefinitionId = flowchartState.selectedDefinitionId;
+
+            flowchartState.selectorKind = nextKind;
+            flowchartState.activeModuleId = null;
+            getFlowchartViewModel(flowchartState);
+
+            if (flowchartState.selectedDefinitionId !== previousSelectedDefinitionId) {
+                syncCodexStateToFlowchartSelection(codexState, flowchartState);
+            }
+
+            rerenderLinkedPanels(root, codexState, flowchartState, {
+                focusSelector: `[data-flowchart-filter-kind="${nextKind}"]`,
+                fallbackFocusSelector: "[data-flowchart-id].is-active",
+            });
+        };
+    });
+
+    regionFilterButtons.forEach((button) => {
+        button.onclick = () => {
+            const nextRegionId = button.dataset.flowchartFilterRegion ?? "all";
+            const previousSelectedDefinitionId = flowchartState.selectedDefinitionId;
+
+            flowchartState.selectorRegionId = nextRegionId;
+            flowchartState.activeModuleId = null;
+            getFlowchartViewModel(flowchartState);
+
+            if (flowchartState.selectedDefinitionId !== previousSelectedDefinitionId) {
+                syncCodexStateToFlowchartSelection(codexState, flowchartState);
+            }
+
+            rerenderLinkedPanels(root, codexState, flowchartState, {
+                focusSelector: `[data-flowchart-filter-region="${nextRegionId}"]`,
+                fallbackFocusSelector: "[data-flowchart-id].is-active",
+            });
+        };
+    });
+
+    moduleButtons.forEach((button) => {
+        button.onclick = () => {
+            const moduleId = button.dataset.flowchartModuleId;
+            const module = activeDefinition?.modules?.find((candidate) => candidate.id === moduleId);
+
+            if (!module || !activeDefinition) {
+                return;
+            }
+
+            applyFlowchartModuleSelection(module, activeDefinition, codexState, flowchartState);
+            rerenderLinkedPanels(root, codexState, flowchartState, {
+                focusSelector: "[data-codex-entry-id].is-active",
+                fallbackFocusSelector: "[data-flowchart-id].is-active",
+            });
+        };
+    });
+
+    rendererButtons.forEach((button) => {
+        button.onclick = () => {
+            const rendererMode = button.dataset.flowchartRenderer;
+
+            if (rendererMode !== "graph" && rendererMode !== "mermaid") {
+                return;
+            }
+
+            flowchartState.rendererMode = rendererMode;
+            rerenderLinkedPanels(root, codexState, flowchartState, {
+                focusSelector: `[data-flowchart-renderer="${rendererMode}"]`,
+                fallbackFocusSelector: "[data-flowchart-id].is-active",
+            });
+        };
+    });
+
     attachLinearKeyboardNavigation(buttons);
-    void hydrateFlowchartDiagram(root, flowchartState);
+    attachLinearKeyboardNavigation(kindFilterButtons);
+    attachLinearKeyboardNavigation(regionFilterButtons);
+    attachLinearKeyboardNavigation(moduleButtons);
+    attachLinearKeyboardNavigation(rendererButtons);
+
+    void hydrateFlowchartVisualization(root, codexState, flowchartState).then(() => {
+        const nodeButtons = [...flowchartPanel.querySelectorAll<HTMLButtonElement>("[data-flowchart-node-entry-id]")];
+
+        nodeButtons.forEach((button) => {
+            button.onclick = () => {
+                const entryId = button.dataset.flowchartNodeEntryId ?? null;
+
+                if (!entryId) {
+                    return;
+                }
+
+                flowchartState.activeModuleId = null;
+                resetCodexState(codexState);
+                codexState.selectedEntryId = entryId;
+
+                if (activeDefinition?.regionIds.length === 1) {
+                    codexState.regionId = activeDefinition.regionIds[0] ?? "all";
+                }
+
+                rerenderLinkedPanels(root, codexState, flowchartState, {
+                    focusSelector: `[data-flowchart-node-entry-id="${entryId}"]`,
+                    fallbackFocusSelector: "[data-codex-entry-id].is-active",
+                });
+            };
+        });
+
+        attachLinearKeyboardNavigation(nodeButtons);
+    });
 }
 
 function applyQingheGuideAction(
@@ -1565,12 +2025,15 @@ function applyQingheGuideAction(
     flowchartState: FlowchartUiState,
 ) {
     resetCodexState(codexState);
+    flowchartState.activeModuleId = null;
 
     switch (action) {
         case "qinghe-overview":
             codexState.domain = "regions";
             codexState.selectedEntryId = "qinghe";
             flowchartState.selectedDefinitionId = "progression-qinghe-onboarding-route";
+            flowchartState.selectorKind = "progression";
+            flowchartState.selectorRegionId = "qinghe";
             return { scrollTargetSelector: "#flowchart-panel" };
         case "qinghe-main-route":
             codexState.domain = "quests";
@@ -1578,6 +2041,8 @@ function applyQingheGuideAction(
             codexState.questType = "main";
             codexState.selectedEntryId = "quest-another-new-wing";
             flowchartState.selectedDefinitionId = "progression-qinghe-onboarding-route";
+            flowchartState.selectorKind = "progression";
+            flowchartState.selectorRegionId = "qinghe";
             return { scrollTargetSelector: "#codex-search-panel" };
         case "qinghe-exploration-routes":
             codexState.domain = "quests";
@@ -1585,6 +2050,8 @@ function applyQingheGuideAction(
             codexState.questType = "exploration";
             codexState.selectedEntryId = "quest-white-bird-shooting";
             flowchartState.selectedDefinitionId = "progression-qinghe-onboarding-route";
+            flowchartState.selectorKind = "progression";
+            flowchartState.selectorRegionId = "qinghe";
             return { scrollTargetSelector: "#codex-search-panel" };
         case "qinghe-jianghu-legacy":
             codexState.domain = "quests";
@@ -1592,6 +2059,8 @@ function applyQingheGuideAction(
             codexState.questType = "jianghu-legacy";
             codexState.selectedEntryId = "quest-meridian-touch";
             flowchartState.selectedDefinitionId = "progression-qinghe-onboarding-route";
+            flowchartState.selectorKind = "progression";
+            flowchartState.selectorRegionId = "qinghe";
             return { scrollTargetSelector: "#codex-search-panel" };
         case "qinghe-campaign-gate":
             codexState.domain = "quests";
@@ -1599,11 +2068,15 @@ function applyQingheGuideAction(
             codexState.questType = "campaign";
             codexState.selectedEntryId = "quest-still-shore";
             flowchartState.selectedDefinitionId = "campaign-branches-qinghe";
+            flowchartState.selectorKind = "campaign";
+            flowchartState.selectorRegionId = "qinghe";
             return { scrollTargetSelector: "#codex-search-panel" };
         case "next-region-gates":
             codexState.domain = "regions";
             codexState.selectedEntryId = "kaifeng";
             flowchartState.selectedDefinitionId = "progression-region-level-overview";
+            flowchartState.selectorKind = "progression";
+            flowchartState.selectorRegionId = "all";
             return { scrollTargetSelector: "#flowchart-panel" };
     }
 }

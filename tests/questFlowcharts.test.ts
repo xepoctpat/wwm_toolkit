@@ -90,6 +90,57 @@ describe("quest flowcharts", () => {
         expect(definition?.mermaid).toContain("-. optional .->");
     });
 
+    it("surfaces Qinghe loops and cross-links as explicit route modules", () => {
+        const progressionDefinition = getQuestFlowchartDefinitionById(definitions, "progression-qinghe-onboarding-route");
+        const campaignDefinition = getQuestFlowchartDefinitionById(definitions, "campaign-branches-qinghe");
+
+        expect(progressionDefinition).toBeTruthy();
+        expect(campaignDefinition).toBeTruthy();
+
+        const campaignLadderModule = progressionDefinition?.modules?.find((module) => module.id === "qinghe-campaign-ladder");
+        const lateChapterLinkModule = campaignDefinition?.modules?.find((module) => module.id === "qinghe-late-chapter-link");
+
+        expect(progressionDefinition?.modules?.map((module) => module.id)).toEqual(
+            expect.arrayContaining([
+                "qinghe-main-spine",
+                "qinghe-exploration-loop",
+                "qinghe-meridian-detour",
+                "qinghe-campaign-ladder",
+            ]),
+        );
+        expect(campaignDefinition?.modules?.map((module) => module.id)).toEqual(
+            expect.arrayContaining([
+                "qinghe-campaign-entry-gate",
+                "qinghe-moonveil-loop",
+                "qinghe-late-chapter-link",
+                "qinghe-sundara-capstone",
+            ]),
+        );
+        expect(campaignLadderModule).toMatchObject({
+            tone: "campaign",
+            focusEntryId: "quest-still-shore",
+            relatedDefinitionId: "campaign-branches-qinghe",
+        });
+        expect(campaignLadderModule?.linkedEntryIds).toEqual(
+            expect.arrayContaining([
+                "quest-still-shore",
+                "quest-bodhi-sea",
+                "quest-gleaming-abyss",
+                "quest-palace-of-annals",
+                "quest-blissful-retreat",
+                "quest-halo-peak",
+            ]),
+        );
+        expect(lateChapterLinkModule).toMatchObject({
+            tone: "campaign",
+            focusEntryId: "quest-blissful-retreat",
+            relatedDefinitionId: "storyline-heaven-has-no-pier-flowchart",
+        });
+        expect(lateChapterLinkModule?.linkedEntryIds).toEqual(
+            expect.arrayContaining(["quest-for-whom-does-he-return", "quest-blissful-retreat"]),
+        );
+    });
+
     it("adds reviewed campaign and optional-route branches to the main storyline chart when the seed supports them", () => {
         const definition = getQuestFlowchartDefinitionById(definitions, "storyline-heaven-has-no-pier-flowchart");
 
