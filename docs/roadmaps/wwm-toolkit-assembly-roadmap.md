@@ -81,6 +81,35 @@ These are the rules that keep the roadmap realistic.
 - keep region order, level gates, and optional-content taxonomy explicit
 - preserve the offline-first design as the default product assumption
 
+## Current strategic checkpoint — 2026-05-15
+
+The project has crossed an important threshold: the modular app is no longer just a scaffold, but it is not yet structurally ready to absorb broad content expansion safely.
+
+Current confirmed state:
+
+- the modular app leads with a Qinghe-first route guide instead of migration scaffolding
+- codex search indexes `50` reviewed entries across `3` regions, `31` quests, `3` storylines, and `13` sources
+- the flowchart pilot exposes `8` Mermaid-backed charts for progression, storyline, and campaign slices
+- `renderFoundationApp.ts` still owns too much rendering, event wiring, UI state, and diagram hydration
+- the legacy prototype remains useful, but should stay in maintenance mode while the modular app becomes the primary product surface
+
+The next strategic milestone should therefore be treated as an **assembly gate**, not a content sprint.
+
+### Assembly Gate 1
+
+Before adding another large content domain, finish these in order:
+
+1. split the modular renderer into owned feature modules
+2. add a clearer top-level app shell / navigation structure
+3. extract the flowchart data into a renderer-neutral graph model
+4. keep the current Mermaid adapter as the compatibility renderer while the replacement is tested
+5. run a small `understand-anything`-inspired graph-rendering spike after the graph model is renderer-neutral
+6. freeze the content intake contract and only then pick the next reviewed content slice
+
+The important nuance: `understand-anything` should influence the graph renderer strategy, but it should **not** be wired in as a local path dependency or dropped into the app before the Phase A ownership split. It is a good source of React Flow / ELK graph-view patterns; it is not a direct Mermaid replacement for the current vanilla TypeScript surface.
+
+See `docs/roadmaps/wwm-toolkit-graph-rendering-strategy.md` for the dedicated evaluation and adoption path.
+
 ## The five workstreams
 
 ## 1. App consolidation
@@ -261,7 +290,7 @@ Stop running the project as a permanent migration experiment.
 - the legacy surface has an intentional status, not an accidental one
 - release steps are boring and repeatable, which is the dream
 
-## Recommended next four milestones
+## Recommended next strategic milestones
 
 These are the most rational next steps from the current state.
 
@@ -273,11 +302,20 @@ These are the most rational next steps from the current state.
    - make the product structure visible in the UI
    - stop presenting one long page as the only shape of the future app
 
-3. **Lock the content intake contract and pick one next content slice**
+3. **Extract a renderer-neutral quest graph model**
+   - stop treating Mermaid text as the canonical chart data
+   - keep existing Mermaid output as an adapter while tests prove parity
+
+4. **Prototype an `understand-anything`-style graph view**
+   - use the local repo as a reference for React Flow / ELK patterns
+   - do not commit a local path dependency
+   - decide whether the modular app should gain a React graph island or a lighter vanilla/SVG renderer
+
+5. **Lock the content intake contract and pick one next content slice**
    - choose either later optional routes or literal encounters
    - do not try to normalize both at once
 
-4. **Add backup/export-import in the modular app**
+6. **Add backup/export-import in the modular app**
    - reduce migration risk
    - make the new surface more trustworthy as the primary daily-use app
 

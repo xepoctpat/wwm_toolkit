@@ -16,7 +16,7 @@ The current shipped build is an **NPC-focused vertical slice** of the broader to
 
 - `app/` — Vite + TypeScript foundation for the modular full-codex migration, including the IndexedDB migration bridge and a Qinghe-first route surface for the reviewed seed
 - `app/src/lib/search/codexSearch.ts` — reusable search/index layer for the reviewed codex seed
-- `app/src/lib/flowcharts/questFlowcharts.ts` — Mermaid-ready flowchart definitions for reviewed storyline and campaign graph slices
+- `app/src/lib/flowcharts/questFlowcharts.ts` — current Mermaid-ready flowchart definitions for reviewed storyline and campaign graph slices
 - `legacy-prototype.html` — legacy static NPC-focused prototype app shell
 - `assets/css/styles.css` — full UI system and responsive styling
 - `assets/js/app.js` — state, rendering, filtering, favorites, progress tracking, notes, map uploads, copy actions
@@ -31,6 +31,7 @@ The current shipped build is an **NPC-focused vertical slice** of the broader to
 - `docs/roadmaps/wwm-toolkit-phase-status.md` — living phase tracker for migration progress and deliverables
 - `docs/roadmaps/wwm-toolkit-documentation-map.md` — purpose guide for the main documentation surfaces
 - `docs/roadmaps/wwm-toolkit-history-log.md` — dated milestone trail for historical tracking
+- `docs/roadmaps/wwm-toolkit-graph-rendering-strategy.md` — chart-renderer strategy, including the `understand-anything` evaluation path
 
 ## How to use
 
@@ -84,11 +85,13 @@ The roadmap now expands the toolkit into a broader **Where Winds Meet companion 
 
 The current foundation app also includes a visible persistence bridge that imports legacy prototype favorites, progress, notes, and custom maps into a versioned storage layer for the modular migration.
 
-It now also includes the first reviewed codex seed: source-backed region entries for Qinghe, Kaifeng, and Hexi, storyline chapters, ordered main-story quest anchors, a small campaign quest slice, and the first first-class Qinghe exploration / Jianghu Legacy optional routes to start the real content graph.
+It now also includes the first reviewed codex seed: source-backed region entries for Qinghe, Kaifeng, and Hexi, storyline chapters, ordered main-story quest anchors, the currently reviewed Qinghe and Kaifeng campaign ladders plus the Game8-backed Hexi campaign slice, and the first first-class Qinghe exploration / Jianghu Legacy optional routes to start the real content graph.
 
 It also now includes a first-pass global codex search panel in the modular app, with query ranking plus domain, region, and quest-type filters across the reviewed seed.
 
 It also now includes a first flowchart pilot in the modular app, rendering the reviewed storyline spine, currently supported campaign-side branches, a Qinghe-first natural progression route, and a region/level gate overview as Mermaid diagrams for easier deep-dive navigation.
+
+Mermaid is currently the compatibility renderer for those charts. The next strategic chart step is to split quest/progression graph data from renderer output, then evaluate an `understand-anything`-style graph view without committing the app to a local path dependency or a premature React migration.
 
 It now also surfaces that reviewed slice in a Qinghe-first layout: the opening route, optional exploration detours, Meridian Touch, and later region gates appear before migration scaffolding so the foundation behaves more like a guide and less like a status dashboard.
 

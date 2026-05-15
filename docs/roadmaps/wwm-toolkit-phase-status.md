@@ -20,6 +20,26 @@ This file is the living execution tracker for the broader `WWM Toolkit` roadmap.
 | Phase 5 — Content operations | planned | Mature validation, build scripts, versioning, and contributor workflow. | Python pipeline will expand here. |
 | Phase 6 — Optional connected platform | planned | Add sync, accounts, submissions, and moderation. | Explicitly deferred until the offline-first experience is stable. |
 
+## Current strategic checkpoint — 2026-05-15
+
+The best next move is **Assembly Gate 1**: make the modular app easier to own before adding another large content slice.
+
+Current reviewed surface:
+
+- `50` codex-search entries: `3` regions, `31` quests, `3` storylines, and `13` sources
+- `8` current flowchart definitions covering Qinghe onboarding, region/level gates, three storyline spines, and three campaign-region charts
+- Qinghe optional exploration and Jianghu Legacy routes are first-class quest entries, while literal `Encounter` activities remain intentionally deferred
+- the current flowchart renderer is Mermaid-backed, but the next chart step should be a renderer-neutral graph model with Mermaid as the compatibility adapter
+
+Strategic next actions:
+
+1. split `renderFoundationApp.ts` into feature-owned modules
+2. add a clear modular-app shell / top-level navigation
+3. separate quest graph data from Mermaid text generation
+4. evaluate the local `understand-anything` repo as a graph-rendering reference, not as an immediate local dependency
+5. freeze the content intake contract before choosing the next expansion slice
+6. pick exactly one content expansion lane afterward: Kaifeng/Hexi non-campaign optional routes **or** literal encounter normalization
+
 ## Phase 1 deliverables
 
 ### Completed
@@ -50,6 +70,7 @@ This file is the living execution tracker for the broader `WWM Toolkit` roadmap.
 ### Remaining
 
 - make the modular app the clear primary surface by splitting `renderFoundationApp.ts` into feature-focused modules and adding a top-level shell/navigation
+- extract a renderer-neutral quest graph model so Mermaid is no longer the canonical chart data format, then evaluate an `understand-anything`-style renderer from a stable adapter boundary
 - freeze a documented content intake contract for new reviewed slices so optional-content taxonomies and evidence rules stop drifting between expansions
 - add additional Python validation scripts
 - expand the reviewed region/quest/storyline seed beyond the current Qinghe/Kaifeng campaign ladders, Game8-backed Hexi campaign slice, and Qinghe optional-route coverage
@@ -60,6 +81,7 @@ This file is the living execution tracker for the broader `WWM Toolkit` roadmap.
 - Full product scope: `docs/roadmaps/wwm-toolkit-full-product-plan.md`
 - Assembly roadmap: `docs/roadmaps/wwm-toolkit-assembly-roadmap.md`
 - Phase A handoff: `docs/roadmaps/wwm-toolkit-phase-a-handoff.md`
+- Graph rendering strategy: `docs/roadmaps/wwm-toolkit-graph-rendering-strategy.md`
 - Documentation map: `docs/roadmaps/wwm-toolkit-documentation-map.md`
 - Historical log: `docs/roadmaps/wwm-toolkit-history-log.md`
 - Original prototype roadmap: `docs/roadmaps/wwm-toolkit-upgrade.md`

@@ -22,7 +22,7 @@ Right now `app/src/app/renderFoundationApp.ts` owns too much at once:
 - UI state creation and synchronization
 - HTML rendering for the hero, guide, flowcharts, codex, phase tracker, domain cards, and migration panel
 - event wiring for guide actions, codex search, flowchart selection, keyboard navigation, and persistence re-import
-- Mermaid diagram hydration
+- current Mermaid diagram hydration
 - a few shared formatting / sanitization helpers
 
 That file works, but it is already past the point where further growth stays cheap.
@@ -56,7 +56,7 @@ Recommended target layout:
 - `app/src/app/sections/renderQingheGuideSection.ts`
 	- guide surface only
 - `app/src/app/sections/renderFlowchartSection.ts`
-	- flowchart panel only
+	- flowchart panel only; consume a chart view model rather than owning graph semantics
 - `app/src/app/sections/renderCodexSearchSection.ts`
 	- search/results/detail rendering only
 - `app/src/app/sections/renderFoundationOverviewSections.ts`
@@ -68,11 +68,32 @@ Recommended target layout:
 - `app/src/app/handlers/attachCodexHandlers.ts`
 	- query/filter/result/detail navigation wiring
 - `app/src/app/handlers/attachFlowchartHandlers.ts`
-	- flowchart selection + Mermaid hydration wiring
+	- flowchart selection + renderer hydration wiring
 - `app/src/app/handlers/attachPersistenceHandlers.ts`
 	- re-import button behavior
+- `app/src/lib/flowcharts/questFlowchartModel.ts`
+	- renderer-neutral graph nodes/edges derived from reviewed quest, storyline, and region content
+- `app/src/lib/flowcharts/renderers/mermaidQuestFlowchartAdapter.ts`
+	- temporary Mermaid serialization adapter so existing chart tests and UI behavior can stay stable while a replacement renderer is evaluated
 
 The exact filenames can still change, but the **responsibility split** should stay close to this shape.
+
+## Diagram renderer adjustment
+
+The local `understand-anything` repo is useful, but it changes the chart discussion.
+
+Its dashboard is a React + React Flow + ELK graph application, not a drop-in Mermaid renderer. That makes the safest Phase A rule:
+
+> isolate graph data first, replace the renderer second
+
+Do not directly replace Mermaid inside the first extraction commit. Instead:
+
+1. extract the current quest/progression relationships into a renderer-neutral node/edge model
+2. keep a Mermaid adapter that produces the current diagrams from that model
+3. add parity tests around chart IDs, linked codex entries, and important labels
+4. only then prototype an `understand-anything`-style renderer against the same model
+
+This keeps the current guide functional while making the future renderer swappable.
 
 ## Recommended extraction order
 
@@ -120,6 +141,7 @@ Extract one rendering surface at a time:
 Rule:
 
 - do not change behavior and file structure in the same extraction unless a trivial bug fix is unavoidable
+- for flowcharts, move the current Mermaid-backed behavior behind an adapter before changing the renderer itself
 
 ### 4. Move event handlers
 
@@ -166,7 +188,7 @@ To keep review and rollback sane, prefer a short sequence of small commits:
 1. extract formatting/sanitization helpers
 2. extract UI state and sync helpers
 3. extract codex rendering
-4. extract flowchart rendering + Mermaid support
+4. extract flowchart rendering + Mermaid adapter boundary
 5. extract guide and migration sections
 6. extract handler modules
 7. add or polish the top-level shell/navigation labels

@@ -75,6 +75,17 @@ Use for:
 
 This is the **Phase A handoff and execution-prep document**.
 
+### `docs/roadmaps/wwm-toolkit-graph-rendering-strategy.md`
+
+Use for:
+
+- documenting the current Mermaid chart pilot
+- evaluating the local `understand-anything` repo as a replacement direction
+- deciding how quest/progression graph data should be separated from rendering technology
+- recording renderer migration risks, prerequisites, and exit criteria
+
+This is the **graph-rendering strategy document**.
+
 ### `docs/roadmaps/wwm-toolkit-phase-status.md`
 
 Use for:
@@ -159,6 +170,12 @@ For any meaningful milestone, update the following on purpose:
 - `content/published/README.md` if the contract changes
 - Python validation/build scripts if the published layer rules evolve
 
+### Update when graph rendering changes
+
+- `docs/roadmaps/wwm-toolkit-graph-rendering-strategy.md`
+- `docs/roadmaps/wwm-toolkit-phase-a-handoff.md` if ownership boundaries change
+- `README.md` if user-facing chart behavior changes
+
 ## What each milestone entry should capture
 
 Each history-log entry should answer these questions:
@@ -173,11 +190,12 @@ If a change cannot answer those five questions, it probably is not documented we
 
 ## Current documentation rhythm
 
-As of `2026-04-16`, the project is using this practical rhythm:
+As of `2026-05-15`, the project is using this practical rhythm:
 
 - phase tracker for the live roadmap
 - history log for milestone chronology
 - raw evidence notes for content provenance
+- graph-rendering strategy for Mermaid replacement decisions
 - modular source packs plus tests for machine-checkable structure
 
 That combination is intentionally boring — which is excellent news for future debugging.

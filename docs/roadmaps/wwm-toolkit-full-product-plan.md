@@ -2,9 +2,9 @@
 
 ## Current state
 
-The current project is a **good vertical slice**, not yet the whole product.
+The current project started as a **good vertical slice**, not the whole product.
 
-Right now it is strongest in one lane:
+The legacy prototype is strongest in one lane:
 
 - NPC routing
 - archetype conversation helpers
@@ -14,6 +14,30 @@ Right now it is strongest in one lane:
 That is valuable, but **Where Winds Meet is much bigger than NPCs**.
 
 If this is going to become a real `WWM Toolkit`, it should evolve from an NPC companion into an **offline-first game companion + codex** for the broader game.
+
+## Current strategic checkpoint — 2026-05-15
+
+The foundation milestone described later in this document has partially landed:
+
+- Vite + TypeScript foundation exists under `app/`
+- typed schemas exist for quests, storylines, regions, NPCs, and sources
+- IndexedDB migration exists for legacy favorites, notes, progress, and custom maps
+- global codex search exists across reviewed regions, quests, storylines, and sources
+- the current reviewed content graph contains `3` regions, `31` quests, `3` storylines, and `13` sources
+- the current chart surface contains `8` Mermaid-backed graph definitions
+
+The next product risk is no longer “can this become more than NPCs?” It already has.
+
+The next product risk is **whether the modular app can stay coherent while it grows**.
+
+Immediate strategic direction:
+
+1. make the modular app the primary owned surface
+2. split the overgrown renderer into feature modules
+3. introduce an explicit app shell/navigation layer
+4. decouple quest graph data from Mermaid rendering
+5. evaluate the local `understand-anything` repo as a graph-rendering reference after the adapter boundary exists
+6. freeze the content intake contract before the next expansion slice
 
 ## What “full toolkit” should mean
 
@@ -453,6 +477,26 @@ Recommended product modules:
 - `sources` — provenance, confidence, verification notes
 - `settings` — storage, import/export, theme, backups
 
+## Graph and chart rendering direction
+
+The current Mermaid-backed flowchart pilot is a good proof of concept, but Mermaid strings should not become the canonical graph model.
+
+The product should eventually represent route charts as structured graph data:
+
+- graph nodes linked to codex entry IDs
+- typed edges for main progression, optional branches, gates, campaign routes, and future encounter links
+- renderer adapters that can target Mermaid, SVG/Canvas, React Flow, or another graph surface
+
+The locally cloned `understand-anything` repo is strategically relevant because it already contains a React Flow + ELK dashboard with domain/flow/step node concepts. It should be treated as a reference implementation for a richer graph explorer, not as an immediate dependency to wire into this vanilla TypeScript app.
+
+The safe order is:
+
+1. extract renderer-neutral graph definitions
+2. preserve Mermaid as the current adapter
+3. prototype a richer graph panel using `understand-anything` patterns
+4. decide whether to introduce a React graph island or keep a lighter non-React renderer
+5. only remove Mermaid after feature parity and bundle/runtime impact are understood
+
 ## UX feature set for a true v1
 
 The first real full-product v1 should go beyond the current NPC tools.
@@ -605,21 +649,21 @@ Goal: community and sync features.
 
 ## Recommended next milestone
 
-The best immediate milestone is:
+The best immediate milestone is now:
 
-## `WWM Toolkit v1 Foundation + Codex Expansion`
+## `Assembly Gate 1: one app control tower`
 
 That milestone should include exactly these items:
 
-1. migrate to `Vite + TypeScript`
-2. move persistence from `localStorage` to `IndexedDB`
-3. introduce typed domain schemas
-4. add `quests` + `storylines` as first new major content domains
-5. add global search across all loaded domains
-6. add data validation scripts
-7. add basic tests
+1. split `renderFoundationApp.ts` into feature-owned modules
+2. add a top-level modular app shell / navigation structure
+3. extract renderer-neutral quest graph definitions
+4. keep Mermaid as a compatibility adapter while a richer renderer is evaluated
+5. document the content intake contract for reviewed entries
+6. add validation coverage for any new graph/content contract rules
+7. choose one next expansion slice only after the above is stable
 
-That gets you from **NPC prototype** to **true full-toolkit foundation** without prematurely overbuilding the online parts.
+That gets you from **working foundation** to **manageable product surface** without turning every new content pass into a renderer, navigation, and taxonomy negotiation.
 
 ## Suggested future structure
 

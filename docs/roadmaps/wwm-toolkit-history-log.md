@@ -17,6 +17,77 @@ This log tells you **how it got there**.
 
 ---
 
+## 2026-05-15 — Mermaid dependency alerts resolved
+
+### What changed
+
+The direct Mermaid runtime dependency was upgraded from `11.14.0` to `11.15.0`, and the transitive `uuid` dependency was refreshed through `npm audit fix`.
+
+### Why it was added
+
+GitHub Dependabot reported four moderate Mermaid advisories affecting `mermaid <= 11.14.0`, including Gantt DoS and class/config sanitization issues. Upgrading Mermaid cleared those direct alerts; refreshing the lockfile cleared the remaining transitive `uuid` audit advisory.
+
+### Key files and surfaces
+
+- `package.json`
+- `package-lock.json`
+
+### Verification
+
+- `npm run test` passed: `41/41` tests
+- `npm run lint` passed
+- `npm run build` passed
+- `npm audit` reported `0` vulnerabilities
+- `scripts_py/build_data_pack.py` passed
+- `scripts_py/validate_sources.py` passed
+
+### Follow-up after this slice
+
+- keep the Mermaid replacement strategy active because the production build still ships large Mermaid chunks
+- continue the planned renderer-neutral graph-model extraction before replacing Mermaid completely
+
+---
+
+## 2026-05-15 — Strategic roadmap and graph-rendering direction refreshed
+
+### What changed
+
+The roadmap set was updated with a current strategic checkpoint:
+
+- documented that the modular app now has a real Qinghe-first guide, codex search, and Mermaid-backed chart pilot, but still needs assembly discipline before broad expansion
+- reframed the next milestone as `Assembly Gate 1: one app control tower`
+- added a dedicated graph-rendering strategy document for evaluating the local `understand-anything` repo as a possible Mermaid replacement direction
+- updated the Phase A handoff so flowchart work first extracts a renderer-neutral graph model and only then evaluates renderer replacement
+- updated the documentation map and README so the new chart strategy has an explicit home
+
+### Why it was added
+
+The project needed an up-to-date strategic plan after the modular app became more than a scaffold. The next risk is not lack of raw content; it is renderer ownership, app-shell clarity, content-contract drift, and avoiding a premature chart-framework migration.
+
+### Key files and surfaces
+
+- `docs/roadmaps/wwm-toolkit-assembly-roadmap.md`
+- `docs/roadmaps/wwm-toolkit-phase-status.md`
+- `docs/roadmaps/wwm-toolkit-phase-a-handoff.md`
+- `docs/roadmaps/wwm-toolkit-full-product-plan.md`
+- `docs/roadmaps/wwm-toolkit-documentation-map.md`
+- `docs/roadmaps/wwm-toolkit-graph-rendering-strategy.md`
+- `README.md`
+
+### Verification
+
+- cross-checked the update against the current TypeScript app structure, content packs, tests, and local `understand-anything` repository shape
+- no runtime code was changed in this documentation slice
+
+### Follow-up after this slice
+
+- begin Phase A by splitting `renderFoundationApp.ts`
+- extract a renderer-neutral quest graph model before replacing Mermaid
+- evaluate an `understand-anything`-style graph renderer from that adapter boundary, not as a local path dependency
+- freeze the content intake contract before choosing the next reviewed expansion slice
+
+---
+
 ## 2026-04-16 — Phase A handoff prepared before the refactor
 
 ### What changed
