@@ -1,5 +1,5 @@
 import type { QuestEntry, QuestPack } from "../../data/schemas/quest";
-import type { RegionPack } from "../../data/schemas/region";
+import type { RegionEntry, RegionPack, RegionRouteWindow } from "../../data/schemas/region";
 import type { StorylinePack } from "../../data/schemas/storyline";
 import {
     createQuestGraphDefinition,
@@ -64,117 +64,58 @@ function createFlowchartDefinition(definition: Omit<QuestFlowchartDefinition, "m
     };
 }
 
-function buildQingheProgressionModules(ids: {
-    storylineId: string;
-    anotherNewWingId: string;
-    whiteBirdId: string;
-    shamelessId: string;
-    horseNeighsId: string;
-    meridianTouchId: string;
-    dustMirrorId: string;
-    finaleId: string;
-    stillShoreId: string;
-    bodhiSeaId?: string;
-    gleamingAbyssId?: string;
-    palaceOfAnnalsId?: string;
-    blissfulRetreatId?: string;
-    haloPeakId?: string;
-}): QuestFlowchartModule[] {
+function createFlowchartModuleFromRouteWindow(
+    routeWindow: RegionRouteWindow,
+    overrides: Partial<QuestFlowchartModule> = {},
+): QuestFlowchartModule {
+    return {
+        id: overrides.id ?? routeWindow.id,
+        title: overrides.title ?? routeWindow.title,
+        summary: overrides.summary ?? routeWindow.summary,
+        tone: overrides.tone ?? routeWindow.tone,
+        linkedEntryIds: overrides.linkedEntryIds ?? routeWindow.linkedEntryIds,
+        focusEntryId: overrides.focusEntryId ?? routeWindow.focusEntryId,
+        relatedDefinitionId: overrides.relatedDefinitionId,
+    };
+}
+
+function buildQingheProgressionModules(qinghe: RegionEntry): QuestFlowchartModule[] {
+    const routeWindowById = new Map(qinghe.routeWindows.map((window) => [window.id, window]));
+    const mainSpine = routeWindowById.get("qinghe-main-spine");
+    const explorationLoop = routeWindowById.get("qinghe-exploration-loop");
+    const meridianDetour = routeWindowById.get("qinghe-meridian-detour");
+    const campaignLadder = routeWindowById.get("qinghe-campaign-ladder");
+
+    if (!mainSpine || !explorationLoop || !meridianDetour || !campaignLadder) {
+        return [];
+    }
+
     return [
-        {
-            id: "qinghe-main-spine",
-            title: "Main spine",
-            summary: "The Chapter 1 route through Qinghe stays the backbone: open with Another New Wing, pivot through A Horse Neighs in the Forest, then bridge into the late-Chapter 1 finale.",
-            tone: "main",
-            linkedEntryIds: [
-                ids.storylineId,
-                ids.anotherNewWingId,
-                ids.horseNeighsId,
-                ids.dustMirrorId,
-                ids.finaleId,
-            ],
-            focusEntryId: ids.anotherNewWingId,
-        },
-        {
-            id: "qinghe-exploration-loop",
-            title: "Exploration loop",
-            summary: "White Bird Shooting and The Shameless currently form the clearest reviewed optional loop off Another New Wing, so they should stay grouped together until deeper route normalization lands.",
-            tone: "exploration",
-            linkedEntryIds: [ids.anotherNewWingId, ids.whiteBirdId, ids.shamelessId],
-            focusEntryId: ids.whiteBirdId,
-        },
-        {
-            id: "qinghe-meridian-detour",
-            title: "Meridian detour",
-            summary: "Meridian Touch is a short but important Jianghu Legacy link off A Horse Neighs in the Forest, and it deserves to read as a named detour instead of a generic side branch.",
-            tone: "legacy",
-            linkedEntryIds: [ids.horseNeighsId, ids.meridianTouchId],
-            focusEntryId: ids.meridianTouchId,
-        },
-        {
-            id: "qinghe-campaign-ladder",
-            title: "Campaign ladder",
-            summary: "Still Shore is only the opening gate. The reviewed Qinghe campaign ladder continues through Moonveil and Sundara, so keep that follow-through explicit even when the progression chart only shows the entry point.",
-            tone: "campaign",
-            linkedEntryIds: uniqueIds([
-                ids.horseNeighsId,
-                ids.stillShoreId,
-                ids.bodhiSeaId ?? "",
-                ids.gleamingAbyssId ?? "",
-                ids.palaceOfAnnalsId ?? "",
-                ids.blissfulRetreatId ?? "",
-                ids.haloPeakId ?? "",
-            ]),
-            focusEntryId: ids.stillShoreId,
-            relatedDefinitionId: "campaign-branches-qinghe",
-        },
+        createFlowchartModuleFromRouteWindow(mainSpine),
+        createFlowchartModuleFromRouteWindow(explorationLoop),
+        createFlowchartModuleFromRouteWindow(meridianDetour),
+        createFlowchartModuleFromRouteWindow(campaignLadder, { relatedDefinitionId: "campaign-branches-qinghe" }),
     ];
 }
 
-function buildQingheCampaignModules(ids: {
-    horseNeighsId: string;
-    stillShoreId: string;
-    bodhiSeaId: string;
-    gleamingAbyssId: string;
-    palaceOfAnnalsId: string;
-    finaleId: string;
-    blissfulRetreatId: string;
-    haloPeakId: string;
-}): QuestFlowchartModule[] {
+function buildQingheCampaignModules(qinghe: RegionEntry): QuestFlowchartModule[] {
+    const routeWindowById = new Map(qinghe.routeWindows.map((window) => [window.id, window]));
+    const openingGate = routeWindowById.get("qinghe-opening-gate");
+    const campaignLadder = routeWindowById.get("qinghe-campaign-ladder");
+    const lateChapterLink = routeWindowById.get("qinghe-late-chapter-link");
+    const sundaraCapstone = routeWindowById.get("qinghe-sundara-capstone");
+
+    if (!openingGate || !campaignLadder || !lateChapterLink || !sundaraCapstone) {
+        return [];
+    }
+
     return [
-        {
-            id: "qinghe-campaign-entry-gate",
-            title: "Opening gate",
-            summary: "Still Shore is anchored to A Horse Neighs in the Forest, so the first Qinghe campaign branch should always stay visibly tied to that main-story checkpoint.",
-            tone: "campaign",
-            linkedEntryIds: [ids.horseNeighsId, ids.stillShoreId],
-            focusEntryId: ids.stillShoreId,
-        },
-        {
-            id: "qinghe-moonveil-loop",
-            title: "Moonveil loop",
-            summary: "The current reviewed Qinghe ladder loops through Bodhi Sea, Gleaming Abyss, and Palace of Annals before the later Chapter 1 re-entry. Treat it as a campaign module, not a string of isolated side quests.",
-            tone: "campaign",
-            linkedEntryIds: [ids.stillShoreId, ids.bodhiSeaId, ids.gleamingAbyssId, ids.palaceOfAnnalsId],
-            focusEntryId: ids.bodhiSeaId,
-        },
-        {
-            id: "qinghe-late-chapter-link",
-            title: "Late-Chapter 1 link",
-            summary: "Blissful Retreat reconnects the Qinghe campaign ladder to the For Whom Does He Return window, so the late-story link should be visible instead of buried in notes.",
-            tone: "campaign",
-            linkedEntryIds: [ids.finaleId, ids.blissfulRetreatId],
-            focusEntryId: ids.blissfulRetreatId,
+        createFlowchartModuleFromRouteWindow(openingGate),
+        createFlowchartModuleFromRouteWindow(campaignLadder),
+        createFlowchartModuleFromRouteWindow(lateChapterLink, {
             relatedDefinitionId: "storyline-heaven-has-no-pier-flowchart",
-        },
-        {
-            id: "qinghe-sundara-capstone",
-            title: "Sundara capstone",
-            summary: "Halo Peak is the current reviewed end of Qinghe's campaign route, so it works as the modular capstone until the broader post-Qinghe structure is normalized.",
-            tone: "campaign",
-            linkedEntryIds: [ids.blissfulRetreatId, ids.haloPeakId],
-            focusEntryId: ids.haloPeakId,
-        },
+        }),
+        createFlowchartModuleFromRouteWindow(sundaraCapstone),
     ];
 }
 
@@ -373,7 +314,8 @@ function buildRegionLevelProgressionFlowchartDefinition(
     });
 }
 
-function buildQingheProgressionFlowchartDefinition(questPack: QuestPack, storylinePack: StorylinePack) {
+function buildQingheProgressionFlowchartDefinition(regionPack: RegionPack, questPack: QuestPack, storylinePack: StorylinePack) {
+    const qinghe = regionPack.entries.find((entry) => entry.id === "qinghe");
     const questById = new Map(questPack.entries.map((entry) => [entry.id, entry]));
     const storyline = storylinePack.entries.find((entry) => entry.id === "storyline-heaven-has-no-pier");
     const anotherNewWing = questById.get("quest-another-new-wing");
@@ -384,13 +326,8 @@ function buildQingheProgressionFlowchartDefinition(questPack: QuestPack, storyli
     const dustMirror = questById.get("quest-dust-on-the-rhombus-mirror");
     const finale = questById.get("quest-for-whom-does-he-return");
     const stillShore = questById.get("quest-still-shore");
-    const bodhiSea = questById.get("quest-bodhi-sea");
-    const gleamingAbyss = questById.get("quest-gleaming-abyss");
-    const palaceOfAnnals = questById.get("quest-palace-of-annals");
-    const blissfulRetreat = questById.get("quest-blissful-retreat");
-    const haloPeak = questById.get("quest-halo-peak");
 
-    if (!storyline || !anotherNewWing || !whiteBird || !shameless || !horseNeighs || !meridianTouch || !dustMirror || !finale || !stillShore) {
+    if (!qinghe || !storyline || !anotherNewWing || !whiteBird || !shameless || !horseNeighs || !meridianTouch || !dustMirror || !finale || !stillShore) {
         return null;
     }
 
@@ -504,22 +441,7 @@ function buildQingheProgressionFlowchartDefinition(questPack: QuestPack, storyli
             finale.id,
             stillShore.id,
         ]),
-        modules: buildQingheProgressionModules({
-            storylineId: storyline.id,
-            anotherNewWingId: anotherNewWing.id,
-            whiteBirdId: whiteBird.id,
-            shamelessId: shameless.id,
-            horseNeighsId: horseNeighs.id,
-            meridianTouchId: meridianTouch.id,
-            dustMirrorId: dustMirror.id,
-            finaleId: finale.id,
-            stillShoreId: stillShore.id,
-            bodhiSeaId: bodhiSea?.id,
-            gleamingAbyssId: gleamingAbyss?.id,
-            palaceOfAnnalsId: palaceOfAnnals?.id,
-            blissfulRetreatId: blissfulRetreat?.id,
-            haloPeakId: haloPeak?.id,
-        }),
+        modules: buildQingheProgressionModules(qinghe),
         graph,
     });
 }
@@ -807,36 +729,7 @@ function buildCampaignRegionFlowchartDefinitions(regionPack: RegionPack, storyli
                 ]),
                 modules:
                     region.id === "qinghe"
-                        ? (() => {
-                              const horseNeighs = questById.get("quest-a-horse-neighs-in-the-forest");
-                              const stillShore = questById.get("quest-still-shore");
-                              const bodhiSea = questById.get("quest-bodhi-sea");
-                              const gleamingAbyss = questById.get("quest-gleaming-abyss");
-                              const palaceOfAnnals = questById.get("quest-palace-of-annals");
-                              const finale = questById.get("quest-for-whom-does-he-return");
-                              const blissfulRetreat = questById.get("quest-blissful-retreat");
-                              const haloPeak = questById.get("quest-halo-peak");
-
-                              return horseNeighs &&
-                                  stillShore &&
-                                  bodhiSea &&
-                                  gleamingAbyss &&
-                                  palaceOfAnnals &&
-                                  finale &&
-                                  blissfulRetreat &&
-                                  haloPeak
-                                  ? buildQingheCampaignModules({
-                                        horseNeighsId: horseNeighs.id,
-                                        stillShoreId: stillShore.id,
-                                        bodhiSeaId: bodhiSea.id,
-                                        gleamingAbyssId: gleamingAbyss.id,
-                                        palaceOfAnnalsId: palaceOfAnnals.id,
-                                        finaleId: finale.id,
-                                        blissfulRetreatId: blissfulRetreat.id,
-                                        haloPeakId: haloPeak.id,
-                                    })
-                                  : [];
-                          })()
+                        ? buildQingheCampaignModules(region)
                         : [],
                 graph,
             });
@@ -851,7 +744,7 @@ export function buildQuestFlowchartDefinitions(packs: {
 }) {
     const progressionDefinitions = [
         buildRegionLevelProgressionFlowchartDefinition(packs.regionPack, packs.questPack, packs.storylinePack),
-        buildQingheProgressionFlowchartDefinition(packs.questPack, packs.storylinePack),
+        buildQingheProgressionFlowchartDefinition(packs.regionPack, packs.questPack, packs.storylinePack),
     ].filter((definition): definition is QuestFlowchartDefinition => Boolean(definition));
     const storylineDefinitions = packs.storylinePack.entries
         .map((storyline) => buildStorylineFlowchartDefinition(packs.storylinePack, packs.questPack, storyline.id))

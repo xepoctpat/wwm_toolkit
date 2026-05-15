@@ -1,6 +1,6 @@
 import type { Confidence, EvidenceType, VerificationStatus } from "../../data/schemas/common";
 import type { QuestEntry, QuestPack } from "../../data/schemas/quest";
-import type { RegionPack } from "../../data/schemas/region";
+import type { RegionPack, RegionRouteWindow, RegionSubregionDetail } from "../../data/schemas/region";
 import type { SourceEntry, SourcePack } from "../../data/schemas/source";
 import type { StorylinePack } from "../../data/schemas/storyline";
 
@@ -47,7 +47,9 @@ export interface CodexRegionDocument extends CodexSearchDocumentBase {
     unlockRequirement?: string;
     traversalSummary: string;
     subregions: string[];
+    subregionDetails: RegionSubregionDetail[];
     landmarkNames: string[];
+    routeWindows: RegionRouteWindow[];
     storylineIds: string[];
     progressionGateEntryIds: string[];
     questIds: string[];
@@ -150,6 +152,30 @@ function compareDocuments(a: CodexSearchDocument, b: CodexSearchDocument) {
     return a.sortIndex - b.sortIndex;
 }
 
+function getRegionStructuredMetadata(document: CodexRegionDocument) {
+    return [
+        ...document.subregionDetails.flatMap((detail) => [
+            detail.id,
+            detail.title,
+            detail.summary,
+            ...detail.landmarkNames,
+            ...detail.linkedEntryIds,
+            ...detail.activityHighlights,
+            detail.focusEntryId,
+        ]),
+        ...document.routeWindows.flatMap((window) => [
+            window.id,
+            window.title,
+            window.summary,
+            window.tone,
+            ...window.subregionIds,
+            ...window.landmarkNames,
+            ...window.linkedEntryIds,
+            window.focusEntryId,
+        ]),
+    ];
+}
+
 function getDocumentSearchFields(document: CodexSearchDocument) {
     const title = normalizeSearchText(document.title);
     const summary = normalizeSearchText(document.summary);
@@ -163,6 +189,7 @@ function getDocumentSearchFields(document: CodexSearchDocument) {
                       document.unlockRequirement ?? "",
                       document.traversalSummary,
                       ...document.subregions,
+                      ...getRegionStructuredMetadata(document),
                       ...document.landmarkNames,
                       ...document.storylineIds,
                       ...document.progressionGateEntryIds,
@@ -310,7 +337,9 @@ export function buildCodexSearchDocuments(packs: {
             unlockRequirement: region.unlockRequirement,
             traversalSummary: region.traversalSummary,
             subregions: region.subregions,
+            subregionDetails: region.subregionDetails,
             landmarkNames: region.landmarkNames,
+            routeWindows: region.routeWindows,
             storylineIds: region.storylineIds,
             progressionGateEntryIds: region.progressionGateEntryIds,
             questIds: region.questIds,

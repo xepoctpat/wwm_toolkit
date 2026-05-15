@@ -23,6 +23,7 @@ import {
     groupCodexResultsByDomain,
     searchCodexDocuments,
     type CodexDomain,
+    type CodexRegionDocument,
     type CodexQuestType,
     type CodexSearchDocument,
 } from "../lib/search/codexSearch";
@@ -81,6 +82,8 @@ type QingheGuideAction =
     | "qinghe-jianghu-legacy"
     | "qinghe-campaign-gate"
     | "next-region-gates";
+
+type RegionFacetEntry = Pick<CodexRegionDocument, "subregionDetails" | "routeWindows">;
 
 const SAFE_EXTERNAL_PROTOCOLS = new Set(["http:", "https:"]);
 
@@ -177,6 +180,21 @@ function formatQuestTypeLabel(questType: CodexQuestType) {
             return "Jianghu Legacy";
         default:
             return formatDisplayLabel(questType);
+    }
+}
+
+function formatRouteToneLabel(tone: QuestFlowchartModule["tone"]) {
+    switch (tone) {
+        case "main":
+            return "Main spine";
+        case "exploration":
+            return "Exploration loop";
+        case "legacy":
+            return "Legacy detour";
+        case "campaign":
+            return "Campaign ladder";
+        case "gate":
+            return "Gate / cross-link";
     }
 }
 
@@ -415,6 +433,96 @@ function renderGuideLinkList(ids: string[]) {
     `;
 }
 
+function renderRegionSubregionSection(entry: RegionFacetEntry, title = "Subregion anchors") {
+    if (entry.subregionDetails.length === 0) {
+        return "";
+    }
+
+    return `
+        <section class="detail-section region-facet-section">
+            <h3 class="detail-section__title">${escapeHtml(title)}</h3>
+            <div class="region-facet-grid">
+                ${entry.subregionDetails
+                    .map(
+                        (detail) => `
+                            <article class="region-facet-card">
+                                <div class="result-card__meta region-facet-meta">
+                                    <span class="meta-pill">Subregion anchor</span>
+                                    <span class="meta-pill">${escapeHtml(String(detail.linkedEntryIds.length))} linked entries</span>
+                                </div>
+                                <h4>${escapeHtml(detail.title)}</h4>
+                                <p>${escapeHtml(detail.summary)}</p>
+                                ${detail.landmarkNames.length > 0
+                                    ? `<p class="muted-inline region-facet-caption">Landmarks: ${escapeHtml(detail.landmarkNames.join(", "))}</p>`
+                                    : ""}
+                                ${detail.activityHighlights.length > 0
+                                    ? `
+                                        <ul class="region-facet-highlights">
+                                            ${detail.activityHighlights.map((highlight) => `<li>${escapeHtml(highlight)}</li>`).join("")}
+                                        </ul>
+                                    `
+                                    : ""}
+                                ${renderGuideLinkList(detail.linkedEntryIds)}
+                                <div class="button-row button-row--compact region-facet-actions">
+                                    <button class="action-button action-button--secondary" type="button" data-codex-navigation-id="${escapeHtml(detail.focusEntryId)}">
+                                        Open subregion route
+                                    </button>
+                                </div>
+                            </article>
+                        `,
+                    )
+                    .join("")}
+            </div>
+        </section>
+    `;
+}
+
+function renderRegionRouteWindowSection(entry: RegionFacetEntry, title = "Route windows") {
+    if (entry.routeWindows.length === 0) {
+        return "";
+    }
+
+    const subregionTitleById = new Map(entry.subregionDetails.map((detail) => [detail.id, detail.title]));
+
+    return `
+        <section class="detail-section region-facet-section">
+            <h3 class="detail-section__title">${escapeHtml(title)}</h3>
+            <div class="region-facet-grid">
+                ${entry.routeWindows
+                    .map((window) => {
+                        const subregionLabels = window.subregionIds.map(
+                            (subregionId) => subregionTitleById.get(subregionId) ?? formatDisplayLabel(subregionId),
+                        );
+
+                        return `
+                            <article class="region-facet-card region-facet-card--window">
+                                <div class="result-card__meta region-facet-meta">
+                                    <span class="meta-pill">${escapeHtml(formatRouteToneLabel(window.tone))}</span>
+                                    <span class="meta-pill">${escapeHtml(String(window.linkedEntryIds.length))} linked entries</span>
+                                </div>
+                                <h4>${escapeHtml(window.title)}</h4>
+                                <p>${escapeHtml(window.summary)}</p>
+                                ${subregionLabels.length > 0
+                                    ? `<p class="muted-inline region-facet-caption">Local span: ${escapeHtml(subregionLabels.join(" → "))}</p>`
+                                    : ""}
+                                ${window.landmarkNames.length > 0
+                                    ? `<p class="muted-inline region-facet-caption">Landmarks: ${escapeHtml(window.landmarkNames.join(", "))}</p>`
+                                    : ""}
+                                ${renderGuideLinkList(window.linkedEntryIds)}
+                                <div class="button-row button-row--compact region-facet-actions">
+                                    <button class="action-button action-button--secondary" type="button" data-codex-navigation-id="${escapeHtml(window.focusEntryId)}">
+                                        Focus route window
+                                    </button>
+                                </div>
+                            </article>
+                        `;
+                    })
+                    .join("")}
+            </div>
+        </section>
+    `;
+}
+
 function renderQingheGuideSection() {
     const qinghe = regionById.get("qinghe");
     const kaifeng = regionById.get("kaifeng");
@@ -465,6 +573,7 @@ function renderQingheGuideSection() {
                 <div class="guide-overview">
                     <div class="result-card__meta guide-meta-row">
                         <span class="meta-pill">${escapeHtml(qinghe.subregions.length)} subregions</span>
+                        <span class="meta-pill">${escapeHtml(String(qinghe.routeWindows.length))} route windows</span>
                         <span class="meta-pill">${escapeHtml(String(qinghe.questIds.length))} reviewed quest anchors</span>
                         <span class="meta-pill">Literal encounters stay separate</span>
                     </div>
@@ -533,6 +642,20 @@ function renderQingheGuideSection() {
                         <button class="action-button action-button--secondary" type="button" data-guide-action="next-region-gates">Compare later gates</button>
                     </article>
                 </div>
+            </div>
+
+            <div class="guide-local-atlas">
+                <div class="panel__header">
+                    <div>
+                        <p class="eyebrow">Qinghe proving ground</p>
+                        <h3>Local route windows now come from the region model</h3>
+                    </div>
+                    <span class="pill">Region-first modularity</span>
+                </div>
+                <p>
+                    These route windows are sourced from Qinghe's structured region data, so the toolkit can stress denser local loops and links before broadening the same model into later regions. Slightly less hand-wavy, considerably more useful.
+                </p>
+                ${renderRegionRouteWindowSection(qinghe, "Qinghe local route windows")}
             </div>
         </section>
     `;
@@ -657,7 +780,13 @@ function renderCodexDetailPanel(document: CodexSearchDocument | null) {
             ? [{ label: "Subregions", value: formatListDisplay(document.subregions) }]
             : []),
         ...(document.domain === "regions"
+            ? [{ label: "Structured subregion anchors", value: String(document.subregionDetails.length) }]
+            : []),
+        ...(document.domain === "regions"
             ? [{ label: "Landmarks", value: String(document.landmarkNames.length) }]
+            : []),
+        ...(document.domain === "regions"
+            ? [{ label: "Route windows", value: String(document.routeWindows.length) }]
             : []),
         ...(document.domain === "regions"
             ? [{ label: "Quest anchors", value: String(document.questIds.length) }]
@@ -733,7 +862,9 @@ function renderCodexDetailPanel(document: CodexSearchDocument | null) {
                 : ""}
 
             ${document.domain === "regions" ? renderTextListSection("Subregions", document.subregions) : ""}
+            ${document.domain === "regions" ? renderRegionSubregionSection(document) : ""}
             ${document.domain === "regions" ? renderTextListSection("Landmarks", document.landmarkNames) : ""}
+            ${document.domain === "regions" ? renderRegionRouteWindowSection(document) : ""}
             ${document.domain === "regions"
                 ? renderTextListSection("Activity highlights", document.activityHighlights)
                 : ""}
@@ -1043,18 +1174,7 @@ function formatFlowchartKindLabel(kind: QuestFlowchartDefinition["kind"]) {
 }
 
 function formatFlowchartModuleToneLabel(tone: QuestFlowchartModule["tone"]) {
-    switch (tone) {
-        case "main":
-            return "Main spine";
-        case "exploration":
-            return "Exploration loop";
-        case "legacy":
-            return "Legacy detour";
-        case "campaign":
-            return "Campaign ladder";
-        case "gate":
-            return "Gate / cross-link";
-    }
+    return formatRouteToneLabel(tone);
 }
 
 function renderFlowchartFilterButtons(flowchartState: FlowchartUiState) {

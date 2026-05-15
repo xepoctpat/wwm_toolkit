@@ -35,6 +35,7 @@ The current shipped build is an **NPC-focused vertical slice** of the broader to
 - `docs/roadmaps/wwm-toolkit-history-log.md` — dated milestone trail for historical tracking
 - `docs/roadmaps/wwm-toolkit-graph-rendering-strategy.md` — chart-renderer strategy, including the `understand-anything` evaluation path
 - `docs/roadmaps/wwm-toolkit-qinghe-modularity-checkpoint-handoff.md` — current stable checkpoint handoff for the Qinghe proving-ground pass
+- `docs/roadmaps/wwm-toolkit-qinghe-source-refresh-handoff.md` — latest next-session handoff after the Qinghe locality and source refresh
 
 ## How to use
 
@@ -99,6 +100,8 @@ The current default chart surface is a vanilla HTML/SVG graph prototype, while M
 It now also surfaces that reviewed slice in a Qinghe-first layout: the opening route, optional exploration detours, Meridian Touch, and later region gates appear before migration scaffolding so the foundation behaves more like a guide and less like a status dashboard.
 
 It now also includes compact chart filters and explicit Qinghe route modules so the main spine, exploration loop, Meridian detour, and campaign ladder behave like named structures instead of loosely related chart branches.
+
+The current reviewed seed now indexes `56` codex entries across `3` regions, `31` quests, `3` storylines, and `19` source records. Qinghe's region model now carries structured subregions plus route windows with fresher locality coverage across Verdant Wilds, Moonveil Mountain, and Sundara Land, using normalized names and a broader source-precedence rule set instead of thinner one-guide summaries.
 
 That progression work now explicitly treats literal `encounters` as a separate activity layer from first-class exploration routes, Jianghu Legacy detours, campaign branches, and mystic-art unlock routes.
 

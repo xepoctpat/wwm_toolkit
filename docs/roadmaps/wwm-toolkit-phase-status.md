@@ -22,27 +22,29 @@ This file is the living execution tracker for the broader `WWM Toolkit` roadmap.
 
 ## Current strategic checkpoint — 2026-05-15
 
-The repo is now at a **stable Qinghe modularity checkpoint**.
+The repo is now at a **stable Qinghe source-refresh checkpoint**.
 
-The best next move is **Assembly Gate 1B**: keep using Qinghe as the proving ground for modular structure before broadening the reviewed content surface again.
+The current best move is a small but disciplined hybrid of **Assembly Gate 1B** and content-contract cleanup: keep Qinghe as the proving ground, but shift the next slice toward naming/search polish and ownership cleanup before broadening the reviewed content surface again.
 
 Current reviewed surface:
 
-- `50` codex-search entries: `3` regions, `31` quests, `3` storylines, and `13` sources
+- `56` codex-search entries: `3` regions, `31` quests, `3` storylines, and `19` sources
 - `8` current flowchart definitions covering Qinghe onboarding, region/level gates, three storyline spines, and three campaign-region charts
+- Qinghe now carries `3` structured subregions plus `7` route windows, with deeper landmark and locality coverage across Verdant Wilds, Moonveil Mountain, and Sundara Land
 - Qinghe optional exploration and Jianghu Legacy routes are first-class quest entries, while literal `Encounter` activities remain intentionally deferred
 - the quest graph is now renderer-neutral, with Mermaid kept as the compatibility adapter and the vanilla HTML/SVG graph prototype used as the default chart surface
 - the flowchart workspace now includes compact chart filters plus explicit Qinghe route modules for the main spine, exploration loop, Meridian detour, and the current campaign ladder
 - linked Qinghe modules can now move the workspace between related charts so the campaign ladder, late-Chapter 1 link, and route loops are visible as named structures instead of loose edge trivia
+- Qinghe locality naming is now normalized around fresher source evidence: `Stonewash Strand` is treated as Verdant Wilds, and singular names such as `Moonveil Mountain`, `Sundara Land`, and `Crimson Cliff` are the canonical reviewed forms
 
 Strategic next actions:
 
 1. split the graph/filter/module UI out of `renderFoundationApp.ts` into feature-owned modules so the current checkpoint stops depending on one giant render file
-2. deepen the Qinghe slice before broad region expansion by adding more subregion, landmark, gate, and optional-route structure to prove the module model against denser local content
-3. generalize the current Qinghe route-module pattern into reusable builders instead of leaving it as a one-region special case inside `questFlowcharts.ts`
+2. add alias-aware codex search support for normalized locality names so community variants like `Moonveil Mountains`, `Sundara Lands`, or `Crimson Cliffs` still resolve intentionally instead of relying on exact editorial wording
+3. improve how the codex UI presents denser source stacks and reviewed dates so Qinghe's broader evidence base stays readable as more region-local content lands
 4. keep Mermaid as the fallback renderer, but treat the renderer-neutral graph model plus module metadata as the canonical chart surface
-5. freeze the content intake contract for Qinghe expansion so optional-route, campaign, Jianghu Legacy, and literal-encounter layers keep distinct rules
-6. only after the Qinghe modular proof holds, choose the next expansion lane: Kaifeng/Hexi non-campaign optional routes **or** literal encounter normalization
+5. freeze the content intake contract for Qinghe expansion so source precedence, naming normalization, optional-route taxonomy, campaign structure, Jianghu Legacy routes, and literal-encounter rules stay distinct
+6. only after the Qinghe locality/search proof holds, choose the next expansion lane: Kaifeng/Hexi non-campaign optional routes **or** literal encounter normalization
 
 ## Phase 1 deliverables
 
@@ -73,12 +75,16 @@ Strategic next actions:
 - Extracted a renderer-neutral quest graph model, added a Mermaid compatibility adapter, and made the vanilla HTML/SVG graph prototype the default chart surface while keeping Mermaid available as a fallback
 - Reworked the graph workspace into a graph-first surface with wider stage usage, compact chart filters, route-module cards, and linked-chart actions that make Qinghe loops and campaign ladders explicit
 - Added a dedicated Qinghe modularity checkpoint handoff so the next implementation pass can keep Qinghe as the proving ground instead of broadening scope too quickly
+- Refreshed Qinghe's region and quest seed with fresher Game8 subregion guides plus secondary cross-checks, raising the reviewed source registry to `19` entries and the codex corpus to `56` indexed documents
+- Expanded Qinghe locality coverage with deeper Verdant Wilds / Moonveil Mountain / Sundara Land detail, corrected `Stonewash Strand` into Verdant Wilds, and documented the canonical naming rules in the raw evidence notes
+- Revalidated the current checkpoint after the Qinghe source refresh, including frontend tests (`50/50`), lint, build, and browser verification against the served modular app
 
 ### Remaining
 
 - make the modular app the clear primary surface by splitting `renderFoundationApp.ts` into feature-focused modules and giving the current graph/filter/module workbench clear ownership boundaries
 - generalize the new route-module layer so Qinghe logic becomes reusable structure rather than permanent inline chart-specific code
 - freeze a documented content intake contract for new reviewed slices so optional-content taxonomies and evidence rules stop drifting between expansions
+- add alias-aware search and UI affordances for normalized alternate locality names and denser source stacks
 - add additional Python validation scripts
 - expand the reviewed region/quest/storyline seed by deepening Qinghe first (subregions, landmarks, more linked route windows, and eventually encounter placement) before broadening the next region slice
 - deepen the codex search and flowchart experience with keyboard navigation, clearer result explanations, tighter sync between guided quick actions and deeper codex/flowchart navigation, later content domains such as factions, items, literal encounters, and vendors, and more progression-aware route slices beyond early Qinghe
@@ -89,6 +95,7 @@ Strategic next actions:
 - Assembly roadmap: `docs/roadmaps/wwm-toolkit-assembly-roadmap.md`
 - Phase A handoff: `docs/roadmaps/wwm-toolkit-phase-a-handoff.md`
 - Qinghe modularity handoff: `docs/roadmaps/wwm-toolkit-qinghe-modularity-checkpoint-handoff.md`
+- Qinghe source-refresh handoff: `docs/roadmaps/wwm-toolkit-qinghe-source-refresh-handoff.md`
 - Graph rendering strategy: `docs/roadmaps/wwm-toolkit-graph-rendering-strategy.md`
 - Documentation map: `docs/roadmaps/wwm-toolkit-documentation-map.md`
 - Historical log: `docs/roadmaps/wwm-toolkit-history-log.md`

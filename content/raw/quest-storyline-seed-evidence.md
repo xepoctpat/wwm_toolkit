@@ -1,6 +1,6 @@
 # Quest + storyline seed evidence
 
-Reviewed on `2026-04-16`.
+Reviewed on `2026-05-15`.
 
 This note records the evidence sources used for the first reviewed quest/storyline seed pack in the modular app.
 It is **not** published runtime content.
@@ -42,6 +42,19 @@ It is **not** published runtime content.
    - provided concrete quest progression steps and rewards so the progression flowchart could anchor it conservatively
    - provided the direct evidence needed to promote it from a title-only route note into a first-class `jianghu-legacy` quest entry
 
+7. `https://game8.co/games/Where-Winds-Meet/archives/564776`
+   - refreshed Verdant Wilds locality with `Bamboo Abode`, `General's Shrine`, `Battlecrest Slope`, and `Stonewash Strand`
+   - cross-checked `White Bird Shooting` and `The Shameless` as local Verdant activities, even though the finer category wording does not align perfectly with Fextralife's broader exploration-quest taxonomy
+   - strengthened `Meridian Touch`'s Stonewash Strand locality through Yan Qiren's placement
+
+8. `https://game8.co/games/Where-Winds-Meet/archives/564886`
+   - strengthened the local placement of `Still Shore`, `Gleaming Abyss`, `Palace of Annals`, and `Blissful Retreat`
+   - added fresher Moonveil naming and area coverage for late Qinghe campaign routes
+
+9. `https://game8.co/games/Where-Winds-Meet/archives/564887`
+   - strengthened the local placement of `Bodhi Sea` and `Halo Peak`
+   - added fresher Sundara naming and area coverage for the late Qinghe campaign tail
+
 ## Editorial normalization rules used
 
 - Quest and chapter titles are kept factual.
@@ -51,7 +64,8 @@ It is **not** published runtime content.
 - Chapter 3 is currently modeled with top-level quest anchors only; nested sub-quests are noted in summaries, not yet broken into separate entries.
 - Progression-aware flowcharts may use title-only optional nodes as a temporary fallback, but when source evidence is strong enough the route should be promoted into a first-class quest record with explicit typing instead of remaining a loose chart label.
 - The first promoted optional-route types in this seed are `exploration` and `jianghu-legacy`; they stay distinct from both `campaign` quests and literal `Encounter` activities.
-- `White Bird Shooting` and `The Shameless` are currently modeled as narrow first-class exploration entries with `confidence: provisional` because the reviewed evidence firmly confirms title, taxonomy, region, and `Another New Wing` timing, but not yet a deeper direct route pass.
+- `White Bird Shooting` and `The Shameless` are currently modeled as narrow first-class exploration entries with `confidence: provisional` because Fextralife's reviewed directories firmly confirm title, broad taxonomy, region, and `Another New Wing` timing, but fresher Game8 Verdant Wilds notes surface them as local Verdant activities/injustices instead of a neatly matching quest subtype.
+- Until a stronger direct official category source is normalized, the seed keeps those two entries in the broader `exploration` family while explicitly documenting the category mismatch instead of pretending the sources agree perfectly.
 - The current reviewed `campaign` slice now covers the full Qinghe and Kaifeng campaign rosters plus the currently Game8-backed Hexi roster; where only title/order/location/timing are confirmed, campaign summaries stay deliberately narrow instead of pretending to have full walkthrough normalization.
 - Literal `Encounter` map pins are intentionally deferred from progression routes until their trigger and placement data are normalized well enough to avoid guesswork.
 - That encounter deferral does **not** exclude hidden exploration quests, side-story detours, or mystic-art unlock routes when the source evidence places them clearly enough to model as optional branches.

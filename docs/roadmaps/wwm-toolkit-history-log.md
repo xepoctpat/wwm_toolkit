@@ -17,6 +17,48 @@ This log tells you **how it got there**.
 
 ---
 
+## 2026-05-15 — Qinghe locality and source refresh verified
+
+### What changed
+
+The reviewed Qinghe slice stopped relying on a comparatively thin source stack and gained a much stronger locality pass:
+
+- expanded the source registry from `13` to `19` reviewed entries by adding fresher Game8 subregion guides plus secondary Qinghe cross-checks
+- deepened Qinghe's `subregionDetails`, `routeWindows`, landmark coverage, and route summaries across Verdant Wilds, Moonveil Mountain, and Sundara Land
+- normalized locality naming around the fresher evidence, including treating `Stonewash Strand` as Verdant Wilds and preferring singular canonical names such as `Moonveil Mountain`, `Sundara Land`, and `Crimson Cliff`
+- refreshed quest evidence and source links for the Qinghe exploration, Jianghu Legacy, and campaign-side entries affected by the new locality pass
+- updated the raw evidence notes and search coverage so deeper locality terms such as `Thousand-Buddha Village` resolve in the modular codex
+
+### Why it was added
+
+The graph-first Qinghe workspace had reached the point where the structural model was solid, but the local content density and source breadth still needed work. The purpose of this slice was to make the Qinghe proving ground more trustworthy before the project either broadens into another region or starts polishing search and UI behavior around denser content.
+
+### Key files and surfaces
+
+- `app/src/data/content/sources.ts`
+- `app/src/data/content/regions.ts`
+- `app/src/data/content/quests.ts`
+- `tests/codexSearch.test.ts`
+- `content/raw/region-seed-evidence.md`
+- `content/raw/quest-storyline-seed-evidence.md`
+- `docs/roadmaps/wwm-toolkit-phase-status.md`
+- `docs/roadmaps/wwm-toolkit-qinghe-source-refresh-handoff.md`
+
+### Verification
+
+- frontend tests passed: `50/50`
+- frontend lint passed
+- production build passed
+- browser verification at `http://127.0.0.1:4173/` confirmed `56` indexed codex entries, the expanded Qinghe locality copy, and the refreshed route-window surfaces
+
+### Follow-up after this slice
+
+- add alias-aware search behavior for normalized alternate locality names instead of relying on exact canonical wording only
+- improve how the codex UI presents larger source stacks and reviewed-date context
+- keep the structural split of `renderFoundationApp.ts` active so the denser Qinghe slice does not harden into another giant unowned render surface
+
+---
+
 ## 2026-05-15 — Renderer-neutral graph checkpoint stabilized around Qinghe modularity
 
 ### What changed

@@ -110,8 +110,8 @@ describe("quest flowcharts", () => {
         );
         expect(campaignDefinition?.modules?.map((module) => module.id)).toEqual(
             expect.arrayContaining([
-                "qinghe-campaign-entry-gate",
-                "qinghe-moonveil-loop",
+                "qinghe-opening-gate",
+                "qinghe-campaign-ladder",
                 "qinghe-late-chapter-link",
                 "qinghe-sundara-capstone",
             ]),
@@ -132,7 +132,7 @@ describe("quest flowcharts", () => {
             ]),
         );
         expect(lateChapterLinkModule).toMatchObject({
-            tone: "campaign",
+            tone: "gate",
             focusEntryId: "quest-blissful-retreat",
             relatedDefinitionId: "storyline-heaven-has-no-pier-flowchart",
         });

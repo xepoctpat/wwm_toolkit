@@ -70,7 +70,10 @@ p {
 .hero__stat-grid,
 .flowchart-filter-stack,
 .route-module-grid,
-.route-module-card {
+.route-module-card,
+.guide-local-atlas,
+.region-facet-grid,
+.region-facet-card {
     display: grid;
     gap: 1rem;
 }
@@ -136,6 +139,7 @@ p {
 .domain-card p,
 .result-card p,
 .route-module-card p,
+.region-facet-card p,
 .detail-panel__body p,
 .detail-section p,
 .empty-state {
@@ -284,6 +288,7 @@ p {
 .result-card,
 .flowchart-card,
 .route-module-card,
+.region-facet-card,
 .guide-card,
 .detail-panel__body,
 .empty-state {
@@ -310,6 +315,7 @@ p {
 .result-card,
 .flowchart-card,
 .route-module-card,
+.region-facet-card,
 .guide-card,
 .detail-panel__body,
 .empty-state {
@@ -322,6 +328,10 @@ p {
     display: grid;
     gap: 0.75rem;
     height: 100%;
+}
+
+.guide-local-atlas {
+    margin-top: 1.2rem;
 }
 
 .panel--spotlight {
@@ -577,6 +587,43 @@ code {
 
 .guide-link-list {
     margin-top: 0;
+}
+
+.region-facet-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.region-facet-card {
+    gap: 0.75rem;
+    height: 100%;
+}
+
+.region-facet-meta {
+    margin-bottom: 0;
+}
+
+.region-facet-card h4 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.region-facet-card p {
+    margin-bottom: 0;
+}
+
+.region-facet-caption {
+    display: block;
+}
+
+.region-facet-highlights {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.region-facet-actions {
+    margin-top: auto;
 }
 
 .flowchart-view {
@@ -949,6 +996,7 @@ code {
     .detail-list > div,
     .callout,
     .result-card,
+    .region-facet-card,
     .guide-card,
     .detail-panel__body,
     .empty-state {

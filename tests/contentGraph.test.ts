@@ -81,6 +81,56 @@ describe("reviewed codex graph", () => {
         }
     });
 
+    it("keeps structured Qinghe-style subregion anchors and route windows internally consistent", () => {
+        for (const region of regionPack.entries) {
+            const subregionDetailIds = new Set(region.subregionDetails.map((detail) => detail.id));
+
+            for (const detail of region.subregionDetails) {
+                expect(region.subregions).toContain(detail.title);
+                expect(codexEntryIds.has(detail.focusEntryId), `${region.id} subregion ${detail.id} focus entry is missing`).toBe(
+                    true,
+                );
+
+                for (const entryId of detail.linkedEntryIds) {
+                    expect(codexEntryIds.has(entryId), `${region.id} subregion ${detail.id} links missing entry ${entryId}`).toBe(
+                        true,
+                    );
+                }
+            }
+
+            for (const routeWindow of region.routeWindows) {
+                expect(codexEntryIds.has(routeWindow.focusEntryId), `${region.id} route window ${routeWindow.id} focus entry is missing`).toBe(
+                    true,
+                );
+
+                for (const subregionId of routeWindow.subregionIds) {
+                    expect(subregionDetailIds.has(subregionId), `${region.id} route window ${routeWindow.id} references missing subregion ${subregionId}`).toBe(
+                        true,
+                    );
+                }
+
+                for (const entryId of routeWindow.linkedEntryIds) {
+                    expect(codexEntryIds.has(entryId), `${region.id} route window ${routeWindow.id} links missing entry ${entryId}`).toBe(
+                        true,
+                    );
+                }
+            }
+        }
+
+        expect(regionById.get("qinghe")?.subregionDetails).toHaveLength(3);
+        expect(regionById.get("qinghe")?.routeWindows.map((window) => window.id)).toEqual(
+            expect.arrayContaining([
+                "qinghe-main-spine",
+                "qinghe-exploration-loop",
+                "qinghe-meridian-detour",
+                "qinghe-opening-gate",
+                "qinghe-campaign-ladder",
+                "qinghe-late-chapter-link",
+                "qinghe-sundara-capstone",
+            ]),
+        );
+    });
+
     it("keeps reviewed region progression gates resolvable and source-backed", () => {
         for (const region of regionPack.entries) {
             for (const entryId of region.progressionGateEntryIds) {

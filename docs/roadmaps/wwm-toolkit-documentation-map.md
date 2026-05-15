@@ -86,6 +86,17 @@ Use for:
 
 This is the **current checkpoint handoff document** for the Qinghe modularity pass.
 
+### `docs/roadmaps/wwm-toolkit-qinghe-source-refresh-handoff.md`
+
+Use for:
+
+- the latest next-session handoff after the Qinghe locality and source refresh
+- recording the now-stable naming normalization rules and source-precedence rules for Qinghe
+- handing the next contributor a concrete shortlist for search aliasing, source-presentation polish, and the next expansion decision
+- preserving what was verified at the end of the current content-deepening pass
+
+This is the **day-end handoff document** for the current Qinghe source-refresh checkpoint.
+
 ### `docs/roadmaps/wwm-toolkit-graph-rendering-strategy.md`
 
 Use for:
@@ -186,6 +197,7 @@ For any meaningful milestone, update the following on purpose:
 - `docs/roadmaps/wwm-toolkit-graph-rendering-strategy.md`
 - `docs/roadmaps/wwm-toolkit-phase-a-handoff.md` if ownership boundaries change
 - `docs/roadmaps/wwm-toolkit-qinghe-modularity-checkpoint-handoff.md` when the Qinghe proving-ground plan changes
+- `docs/roadmaps/wwm-toolkit-qinghe-source-refresh-handoff.md` when a new day-end Qinghe checkpoint replaces the active next-session handoff
 - `README.md` if user-facing chart behavior changes
 
 ## What each milestone entry should capture
@@ -209,6 +221,7 @@ As of `2026-05-15`, the project is using this practical rhythm:
 - raw evidence notes for content provenance
 - graph-rendering strategy for Mermaid replacement decisions
 - checkpoint handoff for the current Qinghe modularity proving ground
+- source-refresh handoff for the next-session checkpoint after the Qinghe locality pass
 - modular source packs plus tests for machine-checkable structure
 
 That combination is intentionally boring — which is excellent news for future debugging.

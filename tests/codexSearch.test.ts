@@ -19,7 +19,7 @@ const documents = buildCodexSearchDocuments({
 
 describe("codex search", () => {
     it("indexes every reviewed region, quest, storyline, and source entry", () => {
-        expect(documents).toHaveLength(50);
+        expect(documents).toHaveLength(56);
     });
 
     it("prefers an exact storyline title match over neighboring quest records", () => {
@@ -65,6 +65,34 @@ describe("codex search", () => {
     it("finds subregion metadata on region entries", () => {
         const results = searchCodexDocuments(documents, {
             query: "Sundara Land",
+            filters: {
+                domain: "regions",
+                regionId: "all",
+                questType: "all",
+            },
+        });
+
+        expect(results[0]?.document.id).toBe("qinghe");
+        expect(results[0]?.document.domain).toBe("regions");
+    });
+
+    it("indexes structured Qinghe route-window metadata on region entries", () => {
+        const results = searchCodexDocuments(documents, {
+            query: "Stonewash Strand",
+            filters: {
+                domain: "regions",
+                regionId: "all",
+                questType: "all",
+            },
+        });
+
+        expect(results[0]?.document.id).toBe("qinghe");
+        expect(results[0]?.document.domain).toBe("regions");
+    });
+
+    it("finds deeper late-Qinghe named areas on region entries", () => {
+        const results = searchCodexDocuments(documents, {
+            query: "Thousand-Buddha Village",
             filters: {
                 domain: "regions",
                 regionId: "all",
